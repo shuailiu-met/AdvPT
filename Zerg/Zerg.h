@@ -42,57 +42,75 @@ int max_larvae_per_building = 3;
 
 class Zerg
 {
-    private:
-       //string type;
-       //int supply_cost;
-       //int supply_produced;
-       //int build_time;
-       //int occupied_time;
-       //int unit_produced;
-       //string producer;
-       //string dependency;
-       //string product;
-       //int start_energy;
-       //int max_energy;
-       //bool structure;
-       Zerg *test;
-
     public:
+        string type;
+        int supply_cost;
+        int supply_produced;
+        int build_time;
+        int occupied_time;
+        int occupy_limit;
+        int unit_produced;
+        string producer;
+        string dependency;
+        string product;
+        int start_energy;
+        int max_energy;
+        bool structure;//false for unit,true for building
+        Zerg *test;
+
         static int minerals;
         static int vespene;
         static int supplyremaining;
-        Zerg();
-        checklarvae();
-        checksupply();
+        static int num_larvae;
+        static int num_worker;
+
+        virtual Zerg() = 0;
+        bool checklarvae();
+        bool checkworker();
+        bool checksupply();
+        bool checkdependency();
 };
 
 int Zerg::minerals = 50;
 int Zerg::vespene = 0;
 int Zerg::supplyremaining = 2;//8+6-12
+int Zerg::num_larvae = 3;
+int Zerg::num_worker = 12;
 
-class Build:protected Zerg
+class Building:protected Zerg
 {
-    friend class listofbuilt;
+    //friend class listofbuilt;
     private:
-       string type;
-       int supply_cost;
-       int supply_produced;
-       int build_time;
-       int occupied_time;
-       int unit_produced;
-       string producer;
-       string dependency;
-       string product;
-       int start_energy;
-       int max_energy;
-       bool structure;
+
 
     public://read info from CSV file required in this class
+        Building()
+        {
+
+        };
+
+        Buildingcheck()
+        {
+            if((checkdependency()==1)&&(checkworker()==1)){
+
+            }
+            num_worker = num_worker - 1;
+        }
 
 };
 
-class listofbuilt
+class Unit:protected Zerg
 {
+    private:
+
+    public:
+        Unit()
+        {
+            if((checkdependency()==1)&&(checklarvae()==1)&&(checksupply()==1)){
+
+            }
+            num_larvae = num_larvae - 1;
+        }
 
 };
 #endif // ZERG_H_INCLUDED
