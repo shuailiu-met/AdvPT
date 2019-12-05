@@ -1,16 +1,12 @@
-#pragma once
+
 #include <list>
-#include <tuple>
+
 #include <string>
 #include <iostream>
-#include <functional>
-#include <string>
-#include <sstream>
-#include <vector>
 
 #ifndef ZERG_H_INCLUDED
 #define ZERG_H_INCLUDED
-
+using namespace std;
 //default values for Zerg
 int workers_start = 12;
 int basis_start = 1;
@@ -64,29 +60,11 @@ class Zerg
         static int num_larvae;
         static int num_worker;
 
-        virtual Zerg() = 0;
         bool checklarvae();
         bool checkworker();
         bool checksupply();
         bool checkdependency();
-        bool checkmineral();
-        bool checkgas();
 };
-
-bool Zerg::checkgas()
-{
-    return true;
-}
-
-bool Zerg::checkmineral()
-{
-    return true;
-}
-
-bool Zerg::checksupply()
-{
-    return true;
-}
 
 bool Zerg::checkdependency()
 {
@@ -94,11 +72,6 @@ bool Zerg::checkdependency()
 }
 
 bool Zerg::checkworker()
-{
-    return true;
-}
-
-bool Zerg::checklarvae()
 {
     return true;
 }
@@ -139,6 +112,7 @@ if(b.Buildingcheck()==true)
     {
         num_worker = num_worker-1;
         BL.push_front(b);
+        cout << "Built";
 }
 }
 
@@ -171,4 +145,12 @@ class Queen:protected Unit
 };
 
 list<Queen> QL;
-#endif // ZERG_H_INCLUDED
+#endif
+
+
+int main()
+{
+    Building b1;
+    b1.Addontolist(b1);
+    return 0;
+}
