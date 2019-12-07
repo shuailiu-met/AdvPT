@@ -7,7 +7,7 @@
 
 int main()
 {
-    //by changing number of Larva or minerals or supplies to 0,not pushed
+//by changing number of Larva or minerals or supplies to 0,not pushed
 Race *r1= new Race("Worker","12",50,0,-1,1,0,10,1,1,"Larva","None","/",0,0,false,"Zerg");
 r1->Addontolist();
 Race *r2= new Race("SP","12",100,0,0,0,0,10,1,1,"Worker","None","/",0,0,true,"Zerg");
