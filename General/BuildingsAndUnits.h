@@ -9,49 +9,32 @@
 #define _BUILDINGSANDUNITS_H_
 
 using namespace std;
-int minerals = 5000;
-int vespene = 1000;
+int minerals = 5000;//just for testing,since harvesting is not considered
+int vespene = 1000;//just for testing,since harvesting is not considered
 int supply_occupied_initial = 12;//8+6-12
 int supply_limit_initial = 14;
 int num_larvae = 3;
 int num_worker = 12;
 //int supply_remaining = supply_limit_initial-supply_occupied_initial;
-int supply_remaining = 1000;
+int supply_remaining = 1000;//just for testing,since harvesting is not considered
 
 
 class BuildingsAndUnits
 {
     public:
         string id;
-        /*double mineral_cost;
-        double vespene_cost;
-        double supply;
-        double supply_cost;
-        double supply_produce;
-        string producer;
-        string dependency;
-        string product;
-        double units_produced;
-        bool structure;
-        string production_state;
-        string racename;
-        double building_time;
-        double occupy_limit;
-        double start_energy;
-        double max_energy;*/
 
         bool Check_Resource();
         bool Check_Dependency();
         bool Check_Producer();
         //string Get_Producer();
-
         BuildingsAndUnits(string i):id(i)
         {};
-        void Addontolist();
+        bool Push_And_Check();//in this member function, also addontolist is realised if the conditions are met;
         void Update();
         void Worker_Distribution();
         void Producer_Consumed();
-
+        void Initial_Set_OnTo_List();
 };
 
 
@@ -119,13 +102,14 @@ bool BuildingsAndUnits::Check_Producer()
         if(answer!=RL.end())
         {
             get = target;//May have problem here if directly return true of false(maybe due to the loop)
+            break;
         }
         else
         {
-            get = "No";
+            get = "NULL";
         }
     }
-    if (get=="No")
+    if (get=="NULL")
     {
         return false;
     }
@@ -136,17 +120,19 @@ bool BuildingsAndUnits::Check_Producer()
     }
 };
 
-void BuildingsAndUnits::Addontolist()
+bool BuildingsAndUnits::Push_And_Check()
 {
     if((Check_Dependency()==true)&&(Check_Producer()==true)&&(Check_Resource()==true))
     {
         RL.push_back(*this);
         cout << "pushed" << endl;
         Update();
+        return true;
     }
     else
     {
         cout << "not pushed" <<endl;
+        return false;
     }
 
 };
@@ -162,5 +148,9 @@ void BuildingsAndUnits::Update()
     vespene -= vcost;
 }
 
-
+void BuildingsAndUnits::Initial_Set_OnTo_List()
+{
+    RL.push_back(*this);
+    cout <<"Pushed" << endl;
+}
 #endif // _BUILDINGSANDUNITS_H_
