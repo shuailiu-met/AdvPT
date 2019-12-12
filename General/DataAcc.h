@@ -2,6 +2,9 @@
 #include <unordered_map>
 #include <vector>
 
+#ifndef _DATAACC_H_
+#define _DATAACC_H_
+
 /*********************** Class DataAcc *************************
  * Parses a csv file with information about buildings and Units
  * stores them in Hash Map and allows access to the attributes
@@ -61,3 +64,5 @@ public:
     std::vector<std::string> getIdVector() const {return {ids.begin(), ids.end()};}
     std::vector<std::string> getIndicesVector() const {return {indices.begin(), indices.end()};}
 };
+
+#endif // _DATAACC_H_
