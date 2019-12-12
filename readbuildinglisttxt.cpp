@@ -18,27 +18,26 @@
 
 using namespace std;
 
-void readtxt(string a[])
+vector<string> readtxt(vector<string> a)
 {
     char buffer[128];
-    int i=0;
     fstream outFile;
-    outFile.open("...buildlists/terran/terran1.txt",ios::in);
+    outFile.open(".../buildlists/terran/terran2.txt",ios::in);
     while(!outFile.eof())
     {
-        outFile.getline(buffer,128,'\n');//getline(char *,int,char) 表示该行字符达到256个或遇到换行就结束
-        a[i]=buffer;
+        outFile.getline(buffer,128,'\n');
+        a.push_back(buffer);
         cout<<buffer<<endl;
-        ++i;
     }
     outFile.close();
+    return a;
 }
 int main()
 {
-    string a[10];
-    readtxt(a);
-    for (int i=0; i<10; i++) {
-    BuildingsAndUnits *b = new BuildingsAndUnits(a[i]);
-    b->Addontolist();
+     vector<string> Buildlist;
+    Buildlist = readtxt(Buildlist);//read buildlist
+    for (vector<string>::iterator it = Buildlist.begin(); it != Buildlist.end(); ++it) {
+        Build(*it);
     }
+    return 0;
 }
