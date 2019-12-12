@@ -7,7 +7,7 @@
 using namespace std;
 
 int main(){
-    DataAcc data("../res/unit_db.csv");
+    DataAcc data("../res/unit_db.csv", "../res/parameters.csv");
 
     // get all unit names and all attribute names as vector
     vector<string> id = data.getIdVector();
@@ -42,10 +42,20 @@ int main(){
         cout << '\t' << *it << '\n';
     }
 
-    // get values as double
-    double val = data.getAttributeValue("VoidRay", DataAcc::supply_cost);
+    // get values
+    int val = data.getAttributeValue("VoidRay", DataAcc::supply_cost);
     cout << "VoidRay supply cost: " << val << endl;
     val = data.getAttributeValue("Baneling", DataAcc::supply);
     cout << "Baneling supply: " << val << endl;
+
+    // get settings
+    val = data.getParameter("WORKERS_START");
+    cout << "Workers start value: " << val << endl;
+    val = data.getParameter("ENERGY_REGEN_RATE");
+    cout << "Energy boost rate: " << val << endl;
+    val = data.getParameter("CHRONOBOOST_SPEEDUP");
+    cout << "Chronoboost speedup: " << val << endl;
+    val = data.getParameter("MAX_LARVA_PER_BUILDING");
+    cout << "Max larva per building: " << val << endl;
     return 0;
 }
