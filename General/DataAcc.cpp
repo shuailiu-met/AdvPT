@@ -59,13 +59,11 @@ int DataAcc::parseConfigLine(std::string line){
     // theres a trailing '\r' in the line -> delete
     //line.erase(line.size() - 1);
     std::stringstream lineStream(line);
-    std::cout<<line<<"\n";
 
     int count = 0;
     while(std::getline(lineStream, cell, ',')){
         // the first element is the name of the unit
         // -> will be the id for unit access
-        std::cout<<cell<<"\n";
         if(count == 0){
             id = cell;
         }else{
@@ -78,7 +76,6 @@ int DataAcc::parseConfigLine(std::string line){
     if ((!lineStream && cell.empty()) || count != 2){
         // If there was a trailing comma then no value is given to setting
         // -> error
-        std::cout<<"Broken!!! " << count << "\n";
         return -1;
     }
     return 0;
@@ -138,18 +135,23 @@ std::vector<std::string> DataAcc::getAttributeVector(std::string id, int attribu
     return result;
 }
 
-int DataAcc::getAttributeValue(std::string id, int attribute){
+int DataAcc::getAttributeValue(std::string id, int attribute, bool fp){
     std::string attr = data[id][attribute];
     double value = 0;
     std::stringstream st(attr);
     st >> value;
     // work with fixed point precision
     // -> map from the double range to int by multiplying with 10000
-    int ret = (int)(value * FIXEDPOINT_FACTOR);
+    int ret = 0;
+    if(fp){
+        ret = (int)(value * FIXEDPOINT_FACTOR);
+    } else {
+        ret = (int)(value);
+    }
     return ret;
 }
 
-int DataAcc::getParameter(std::string id){
+int DataAcc::getParameter(std::string id, bool fp){
     std::string attr = settings[id];
     // parse to double
     double value = 0;
@@ -157,6 +159,16 @@ int DataAcc::getParameter(std::string id){
     st >> value;
     // work with fixed point precision
     // -> map from the double range to int by multiplying with 10000
-    int ret = (int)(value * FIXEDPOINT_FACTOR);
+    int ret = 0;
+    if(fp){
+        ret = (int)(value * FIXEDPOINT_FACTOR);
+    } else {
+        ret = (int)(value);
+    }
     return ret;
+}
+
+Unit DataAcc::getUnit(std::string name){
+    Unit u(name, this->getAttributeValue(name, this->build_time));
+    return u;
 }

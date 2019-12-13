@@ -1,6 +1,7 @@
 #ifndef DATAACC_H
 #define DATAACC_H
 
+#include "Unit.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -11,8 +12,6 @@
  * Parses a csv file with information about buildings and Units
  * stores them in Hash Map and allows access to the attributes
  * with the Names.
- * TODO: function which returns class for given name
- * TODO: also parse the parameters.csv file and implement functions
  ***************************************************************/
 
 class DataAcc {
@@ -51,31 +50,6 @@ public:
         race = 15,
     };
 
-/*
-    enum Params{
-        workers_start = "WORKERS_START",
-        basis_start = "BASIS_START",
-        oerlord_start = "OERLORD_START",
-        larva_start = "LARVA_START",
-        minerals_start = "MINERALS_START",
-        vespene_start = "VESPENE_START",
-        mineral_harvesting = "MINERAL_HARVESTING",
-        vespene_harvesting = "VESPENE_HARVESTING",
-        energy_regen_rate = "ENERGY_REGEN_RATE",
-        chronoboost_energy_cost = "CHRONOBOOST_ENERGY_COST",
-        chronoboost_speedup = "CHRONOBOOST_SPEEDUP",
-        chronoboost_duration = "CHRONOBOOST_DURATION",
-        mule_energy_cost = "MULE_ENERGY_COST",
-        mule_duration = "MULE_DURATION",
-        mule_speedup = "MULE_SPEEDUP",
-        injectlarvae_energy_cost = "INJECTLARVAE_ENERGY_COST",
-        injectlarvae_duration = "INJECTLARVAE_DURATION",
-        injectlarvae_amount = "INJECTLARVAE_AMOUNT",
-        max_injectlarvae_per_building = "MAX_INJECTLARVAE_PER_BUILDING",
-        larva_duration = "LARVA_DURATION",
-        max_larva_per_building = "MAX_LARVA_PER_BUILDING",
-    };*/
-
     // constructor:
     // opens the given csv file and calls the parsing function for each line
     DataAcc(std::string unitdb, std::string parameters);
@@ -87,10 +61,12 @@ public:
     // separates the attribute string by '/' and returns all strings as vector
     std::vector<std::string> getAttributeVector(std::string id, int attribute);
     // tries to interpret the attribute as double value and returns that value
-    // as integer multiplied by FIXEDPOINT_FACTOR
-    int getAttributeValue(std::string id, int attribute);
-    // returns the setting as int value multiplied by FIXEDPOINT_FACTOR
-    int getParameter(std::string setting);
+    // as integer multiplied by FIXEDPOINT_FACTOR if fp is true
+    int getAttributeValue(std::string id, int attribute, bool fp = false);
+    // returns the setting as int value multiplied by FIXEDPOINT_FACTOR if fp is true
+    int getParameter(std::string setting, bool fp = false);
+    // returns a preinitialized Unit or Building
+    Unit getUnit(std::string name);
 
     // some testing stuff
     std::vector<std::string> getIdVector() const {return {ids.begin(), ids.end()};}
