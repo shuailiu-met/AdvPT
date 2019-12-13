@@ -33,7 +33,8 @@ int Race::advanceOneTimeStep(){
     std::cout << ", Vespene: " << vespene << ", Supply: " << supply << "\n";
 
     for(std::list<Unit>::iterator it = future.begin(); it != future.end(); it++) {
-        std::cout << (*it).getName() << "\n";
+        std::cout << (*it).getName() << " : ";
+        std::cout << (*it).getTimeLeft() << "\n";
     }
     /*for (auto v : future)
         std::cout << v.getTimeLeft() << "\n";*/

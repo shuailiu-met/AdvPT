@@ -2,32 +2,53 @@
 #include "Protoss/Protoss.h"
 #include "General/DataAcc.h"
 #include <iostream>
+#include <string>
+#include <vector>
+#include <iterator>
+#include <fstream>
+
+using namespace std;
+
+vector<string> readtxt(vector<string> a, string file){
+    string buffer;
+    fstream outFile;
+    outFile.open(file,ios::in);
+    while(getline(outFile, buffer)){
+        a.push_back(buffer);
+    }
+    outFile.close();
+    return a;
+}
 
 int main(int argc, char* argv[]){
     // needs to be called with race and build parameter filepath
     if(argc != 3){
-        std::cout << "Usage: " << argv[0] << " <race> <buildorder>" << std::endl;
+        cout << "Usage: " << argv[0] << " <race> <buildorder>" << endl;
         exit(EXIT_FAILURE);
     }
 
-    // TODO read buildorder file
-    //placeholder:
-    std::vector<std::string> buildorder {"Nexus", "Forge"};
+    // read buildorder file
+    vector<string> buildorder;
+    buildorder = readtxt(buildorder, argv[2]);//read buildlist
+
+    /*for(vector<string>::iterator it = buildorder.begin(); it != buildorder.end(); it++){
+        cout << *it << endl;
+    }*/
 
     // get racename
-    std::string race_name(argv[1]);
+    string race_name(argv[1]);
 
     // get the given race
     if(!race_name.compare("terran")){
-        std::cout << "Use a Terran object!" << "\n";
+        cout << "Use a Terran object!" << "\n";
     }else if(!race_name.compare("zerg")){
-        std::cout << "Use a Zerg object!" << "\n";
+        cout << "Use a Zerg object!" << "\n";
     }else if(!race_name.compare("protoss")){
-        std::cout << "Use a Protoss object!" << "\n";
+        cout << "Use a Protoss object!" << "\n";
         Protoss prot(buildorder);
         while(prot.advanceOneTimeStep());
     }else{
-        std::cout << "Unknown race!" << std::endl;
+        cout << "Unknown race!" << endl;
         exit(EXIT_FAILURE);
     }
 
