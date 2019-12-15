@@ -76,7 +76,6 @@ void Zerg::advanceBuildingProcess(){
     std::vector<Unit> finishedTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
             it->updateTime(1 * FIXEDPOINT_FACTOR);
-    }
     // don't remove element while iterating over list
         if(it->isFinished()){
             if(it->getName()=="Larva")
@@ -95,7 +94,7 @@ void Zerg::advanceBuildingProcess(){
                 it->setOccupy(nullptr);
                 occ->decOccupyBy();
             }
-
+            }
         }
     }
 
