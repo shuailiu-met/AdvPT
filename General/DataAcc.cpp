@@ -178,6 +178,15 @@ Unit DataAcc::getUnit(std::string name){
     }else{
         assert(false);
     }
-    Unit u(name, this->getAttributeValue(name, this->build_time), this->getAttributeValue(name, this->occupy_limit), unit);
+
+    // Here for the units or buildings who has energy specialisation,use the another constructor of Unit
+    if(this->getAttributeValue(name, this->start_energy)!=0)
+    {
+        Unit u(name, this->getAttributeValue(name, this->build_time), this->getAttributeValue(name, this->occupy_limit), unit, this->getAttributeValue(name, this->start_energy, true), this->getAttributeValue(name, this->max_energy, true));
+    }
+    else
+    {
+        Unit u(name, this->getAttributeValue(name, this->build_time), this->getAttributeValue(name, this->occupy_limit), unit);
+    }
     return u;
 }
