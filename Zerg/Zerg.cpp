@@ -91,6 +91,10 @@ void Zerg::advanceBuildingProcess(){
                 building.remove(*it);
             }
             else{
+            if(it->getName()=="Queen")
+            {
+                Queenlist.push_back(*it);
+            }
             finishedTemp.push_back(*it);
             // add supply if building provides it
             supply += data->getAttributeValue(it->getName(), DataAcc::supply_provided, false);
@@ -107,7 +111,6 @@ void Zerg::advanceBuildingProcess(){
     // if finished elements -> move
     for(std::vector<Unit>::iterator it = finishedTemp.begin(); it != finishedTemp.end(); it++) {
         building.remove(*it);
-        Queenlist.push_back(*it);
         finished.push_back(*it);
         std::vector<int> i = {it->getId()};
         addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
