@@ -5,19 +5,21 @@
 #include <iostream>
 
 Class Zerg: public Race{
-private:
+protected:
     int larva_num;
     int larva_max;
     int larva_duration;
-    int inject_num;
+    int inject_larva_num;
     int inject_max;
     int inject_per;
     int inject_duration;
     int energy;
     int inject;
     int larva_producing;
-public:
+    int inject_cost;
+    std::list<Unit> Queenlist;
 
+public:
     Zerg(std::vector<std::string> buildorder) : Race{buildorder}{}
     int larva_total();
     void distributeWorkers();
@@ -26,7 +28,6 @@ public:
     void specialAbility();//for Queen
     int startBuildingProcess();
     void larvaSelfGeneration();
-    void injection();//TODO:for the injection,connected with Queen
 }
 
 #endif // ZERG_H_INCLUDED

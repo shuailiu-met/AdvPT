@@ -8,11 +8,12 @@ Zerg::Zerg(std::vector<std::string> buildorder) : Race{buildorder}{
     larva_num = data->getParameter("LARVA_START",false);
     larva_max = data->getParameter("MAX_LARVA_PER_BUILDING".false);
     larva_duration = data->getParameter("LARVA_DURATION",true);
-    inject_num = 0;
+    inject_larva_num = 0;
     inject_per = data->getParameter("INJECTLARVAE_AMOUNT",false);
     inject_max = data->getParameter("MAX_INJECTLARVAE_PER_BUILDING",false);
     inject_duration = data->getParameter("INJECTLARVAE_DURATION",true);
     larva_producing = 0;
+    inject_cost = data->getParameter("INJECTLARVAE_ENERGY_COST",true)
     // build the starting unit
     //here don't use the getUnit() because here the building time should be set to 0
     Units u("Hatchery",0,1,false);
@@ -34,7 +35,7 @@ int Zerg::larva_total()
 //get the num of worker on gas,then distribute worker
 void Zerg::distributeWorkers()
 {
-    string target = "Extractor";
+    std::string target = "Extractor";
     auto it = finished.begin();
     int i = 0;
     while(it!=finished.end())
@@ -63,7 +64,7 @@ void Zerg::updateResources()
 
 void Zerg::larvaSelfGeneration()
 {
-    if(larva_num + larva_producing < larva_max)
+    if(larva_num + larva_producing + inject_larva_num < larva_max)
     {
         Unit larva("Larva",larva_duration,1,true);
         building.push_back(larva);
@@ -84,6 +85,11 @@ void Zerg::advanceBuildingProcess(){
                 larva_producing--;
                 building.remove(*it);
             }
+            else if(it->getName()=="injection")
+            {
+                inject_larva_num += inject_per;
+                building.remove(*it);
+            }
             else{
             finishedTemp.push_back(*it);
             // add supply if building provides it
@@ -101,6 +107,7 @@ void Zerg::advanceBuildingProcess(){
     // if finished elements -> move
     for(std::vector<Unit>::iterator it = finishedTemp.begin(); it != finishedTemp.end(); it++) {
         building.remove(*it);
+        Queenlist.push_back(*it);
         finished.push_back(*it);
         std::vector<int> i = {it->getId()};
         addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
@@ -113,3 +120,22 @@ int Zerg::startBuildingProcess()
 
 }
 
+//Reminder:this should be checked every time step,injection
+void Zerg::specialAbility()
+{
+    int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
+    for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
+    {
+        if((it->currentEnergy() >= inject_cost)&&(inject_larva_num < inject_max))
+        {
+            Unit in("injection",inject_duration,1,true);
+            building.push_back(in);
+            setEnergy(-energy_regen);
+        }
+
+        if(it->currentEnergy() + energy_regen <= it->maxEnergy())
+        {
+            setEnergy(energy_regen);
+        }
+    }
+}
