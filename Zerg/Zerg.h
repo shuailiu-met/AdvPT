@@ -1,224 +1,63 @@
-#pragma once
-#include <list>
-#include <string>
-#include <iostream>
-#include <algorithm>
-
 #ifndef ZERG_H_INCLUDED
 #define ZERG_H_INCLUDED
 
-using namespace std;
-//default values for Zerg
-int workers_start = 12;
-int basis_start = 1;
-int overlord_start = 1;
-int larva_start = 3;
-int minerals_start = 50;
-int vespene_start = 0;
-double mineral_harvesting = 0.7;
-double vespene_harvesting = 0.63;
-double energy_regen_rate = 0.5625;
-//double chronoboost_energy_cost = 50;
-//double chronoboost_speedup = 1.5;
-//int chronoboost_duration = 20;
-//double mule_energy_cost = 50;
-//int mule_duration = 64;
-//double mule_speedup = 3.8;
-double injectlarvae_energy_cost = 25;
-int injectlarvae_duration = 29;
-int injectlarvae_amount = 3;
-int max_injectlarvae_per_building = 19;
-int larvae_duration = 11;
-int max_larvae_per_building = 3;
+#include "Race.h"
+#include <iostream>
 
-//producer_consumed_at_start - 0;
-//producer_consumed_at_end - 1;
-//producer_occupied - 2;
-//for pair
-//use list
-
-int minerals = 50;
-int vespene = 0;
-int supply_occupied_initial = 12;//8+6-12
-int supply_limit_initial = 14;
-int num_larvae = 3;
-int num_worker = 12;
-
-
-class Zerg
-{
-    public:
-        string type;
-        int supply_cost;
-        int supply_produced;
-        int build_time;
-        int occupied_time;
-        int occupy_limit;
-        int unit_produced;
-        string producer;
-        string dependency;
-        string product;
-        int start_energy;
-        int max_energy;
-        bool structure;//false for unit,true for building
-        string status;
-
-        /*static int minerals;
-        static int vespene;
-        static int supplyremaining;
-        static int num_larvae;
-        static int num_worker;*/
-        Zerg(string,string,int,string);
-        //bool dependencycheck();
-        //bool check(Zerg &);
-        //bool operator()(const Zerg &) const;
-        //bool checklarvae();
-        //bool checkworker();//use workerlist.length();
-        //bool checksupply();
-        //bool checkdependency();
-};
-  // use find_if func
-list<Zerg> ZL;
-Zerg::Zerg(string n,string d,int s,string st):type(n),dependency(d),supply_cost(s),status(st)
-{
-    cout << "Zerg" << endl;
+Class Zerg: public Race{
+private:
+public:
+    Zerg(std::vector<std::string> buildorder) : Race{buildorder}{}
+    int workersOnVespene();
+    void Initializer();
+    void harvestupdate();
 }
 
-/*bool check(Zerg &z)
+//it will return the num of worker on gas
+int Zerg::workersOnVespene()
 {
-    return (this->dependency == z.type);
-}*/
-
-/*bool dependencycheck(string d)
-{
-    auto it = find_if(ZL.begin(),ZL.end(),[d](const Zerg& zerg) { return zerg.type == d;});
-    cout<< it->dependency;
-    return true;
-    else
+    string target = "Extractor";
+    auto it = finished.begin();
+    int i = 0;
+    while(it!=finished.end())
     {
-        return false;
-        cout << "f";
+    it = find_if(it,finished.end(),[&target](const Unit &u){return (u.getName() == target);});
+    if(it!=finished.end())
+    {
+        i++;
+        it++;
+    }
+    }
+    return i;
+}
+
+
+//I think this function should be called in the constructor,when we create the race object
+void Zerg::Initializer()
+{
+    Units u("Hatchery",0);
+    finished.push_back(u);
+    Units o("Overload",0);
+    finished.push_back(o);
+    Units worker[12]("Drone",0);
+    for(int i = 0;i<12;i++)
+    {
+        finished.push_back(worker[i]);
     }
 }
 
-void Addontolist(Zerg &z)
+//I think this function can be merged into the advanceOneTimeStep and this function could be put in the race class
+void Zerg::harvestupdate()
 {
-if(dependencycheck(z.dependency)==true)
-    {
-        //num_worker = num_worker-1;
-        ZL.push_back(z);
-        cout << "Built";
-}
-else
-{
-    cout << "f";
-}
-}*/
-
-void Addontolist(Zerg &z)
-{
-    if(z.dependency=="none")
-    {
-        ZL.push_back(z);
-    }
-    else{
-    string target[2] = {z.dependency,"free"};
-    auto it = find_if(ZL.begin(),ZL.end(),[&target](const Zerg &z){return (z.type == target[0])&&(z.status == target[1]);});
-    cout << it->supply_cost <<endl;
-    ZL.push_back(z);
-    }
+    int worker_vespene = workersOnVespene();
+    int worker_mineral = workers - worker_vespene;
+    mineral_harvesting = data->getParameter("MINERAL_HARVESTING");
+    vespene_harvesting = data->getParameter("VESPENE_HARVESTING");
+    double add_mineral = mineral_harvesting*worker_mineral;//here the data type need to be considered.
+    double add_vespene = vespene_harvesting*worker_vespene;
+    minerals += add_mineral;
+    vespene += add_vespene;
 }
 
 
-
-
-
-
-/*class Worker:protected Zerg
-{
-    private:
-        bool harvest_status;//0 for gas,1 for minerals
-    public:
-        status();
-        {
-            return harvest_status;
-        }
-
-};
-list<Worker> workerlist;
-
-
-
-
-
-
-
-class Building:protected Zerg
-{
-    //friend class listofbuilt;
-    private:
-
-
-    public://read info from CSV file required in this class
-        Building()
-        {};
-        Buildingcheck()
-        {
-            return true;
-        };
-
-};
-
-list<Building> BL;
-
-void Addontolist(Building &b)
-{
-if(b.Buildingcheck()==true)
-    {
-        num_worker = num_worker-1;
-        BL.push_front(b);
-        cout << "Built";
-}
-}
-
-
-
-
-
-class Unit:protected Zerg
-{
-    private:
-
-    public:
-        Unit(){}
-        Unitcheck()
-        {
-            return true;
-        }
-
-};
-
-list<Unit> UL;
-
-void Addontolist(Unit &u)
-{
-if(u.Unitcheck()==true)
-{
-    num_larvae = num_larvae-1;
-    UL.push_front(u);
-    cout << "produced";
-}
-}
-
-
-
-class Queen:protected Unit
-{
-    private:
-
-    public:
-
-};
-
-list<Queen> QL;*/
 #endif // ZERG_H_INCLUDED
