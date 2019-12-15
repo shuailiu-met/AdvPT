@@ -36,9 +36,26 @@ private:
     // build by this building -> used for JSON
     std::string build_by;
 
+    //for the overloaded constructor of special unit(for Protoss,there is only one special unit should be considered,but multiple units for other races)
+    int start_energy;
+    int max_energy;
+
 public:
     // contructor
     Unit(std::string n, int time, int occ_limit, bool unit) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit){
+        // set id
+        id = global_id;
+        id = 0;
+        global_id++;
+
+        // set values
+        name = n;
+        occupied_by_cur = 0;
+        occupy = nullptr;
+    }
+
+    //specified constructor here
+    Unit(std::string n, int time, int occ_limit, bool unit,int se,int me) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit), start_energy(se), max_energy(me){
         // set id
         id = global_id;
         id = 0;
@@ -87,6 +104,11 @@ public:
         if(time_left < 0) time_left = 0;
         return time_left;
     }
+
+    //get the energy now, use start_energy as a variable which changes every time_step(for comprehension: the start energy of next time step)
+    int currentEnergy(){return start_energy;}
+    void setEnergy(int add){start_energy += add;}
+    int maxEnergy(){return max_energy;}
 
     // comparison operators, these are needed to remove objects from a list
     bool operator == (const Unit& s) const { return name == s.name && id == s.id; }
