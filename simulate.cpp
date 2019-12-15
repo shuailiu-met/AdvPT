@@ -9,6 +9,11 @@
 
 using namespace std;
 
+// definition for global id for Units
+// See Unit.h for details
+// TODO not really a good place for the definition -> change
+int global_id = 0;
+
 vector<string> readtxt(vector<string> a, string file){
     string buffer;
     fstream outFile;
@@ -46,7 +51,13 @@ int main(int argc, char* argv[]){
     }else if(!race_name.compare("protoss")){
         cout << "Use a Protoss object!" << "\n";
         Protoss prot(buildorder);
-        while(prot.advanceOneTimeStep());
+        int ret;
+        while((ret = prot.advanceOneTimeStep())){
+            if(ret == -2){
+                cout << "Error! The given buildorder is invalid!\n";
+                exit(EXIT_FAILURE);
+            }
+        }
     }else{
         cout << "Unknown race!" << endl;
         exit(EXIT_FAILURE);

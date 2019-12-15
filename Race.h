@@ -14,8 +14,28 @@
  * TODO think about worker distribution
  ***************************************************************/
 
+// Remember an Event for the JSON output
+struct Event{
+    std::string type;
+    std::string name;
+    std::string info1;
+    std::string info2;
+    std::vector<int> ids;
+};
+
+struct JSON{
+    size_t time;
+    int work_minerals;
+    int work_vespene;
+    int minerals;
+    int vespene;
+    int supply_used;
+    int supply;
+    std::vector<struct Event> events;
+};
+
 class Race {
-private:
+protected:
     // list for finished Units the race currently has
     std::list<Unit> finished;
     // list for Units currently building
@@ -34,10 +54,41 @@ private:
     int minerals;
     int vespene;
     int supply;
+    int supply_used;
+
+    // worker distribution
+    int worker_minerals;
+    int worker_vespene;
+
+    // private helper functions for advanceTimeStep
+    // - update the current resources depending on the worker assignment
+    virtual void updateResources() = 0;
+    // - advance the building process, returns 1 if there's still sth to do
+    virtual void advanceBuildingProcess() = 0;
+    // - activates and manages the special ability - race dependent
+    virtual void specialAbility() = 0;
+    // - start new building process if possible, returns 1 if there are buildings left
+    virtual int startBuildingProcess() = 0;
+    // - distribute workers depending on the strategy
+    void distributeWorkers();
+    // - output current JSON
+    void outputJSON();
+
+    // Event vector for JSON
+    std::vector<struct JSON> json;
+    std::vector<struct Event> events;
+    // add Event to JSON
+    // Supported Types: "build-start", "build-end", "special"
+    // for parameter see examples on https://www10.cs.fau.de/advptSC2/
+    void addEvent(std::string type, std::string name, std::string i1, std::string i2 = "", std::vector<int> *ids = nullptr);
+
+    void addEventsToJSON(bool init = false);
+
 public:
     // standard constructor
     // gets a vector of buildings to be build in that order
     Race(std::vector<std::string> buildings);
+    ~Race(){}
 
     // is called from the simulation to advance on time step
     // 1.) Update Resources

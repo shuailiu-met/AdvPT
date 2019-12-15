@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
+// factor to elevate floating point values to int
+// needed for improved calculation precision
 #define FIXEDPOINT_FACTOR 10000
 
 /*********************** Class DataAcc *************************

@@ -169,6 +169,15 @@ int DataAcc::getParameter(std::string id, bool fp){
 }
 
 Unit DataAcc::getUnit(std::string name){
-    Unit u(name, this->getAttributeValue(name, this->build_time));
+    // TODO ceck if unit exists
+    bool unit = false;
+    if(this->getAttributeString(name, DataAcc::structure) == "True"){
+        unit = false;
+    }else if(this->getAttributeString(name, DataAcc::structure) == "False"){
+        unit = true;
+    }else{
+        assert(false);
+    }
+    Unit u(name, this->getAttributeValue(name, this->build_time), this->getAttributeValue(name, this->occupy_limit), unit);
     return u;
 }
