@@ -15,7 +15,7 @@ Race::Race(std::vector<std::string> buildings){
     }
 
     // init resources
-    workers = data->getParameter("WORKERS_START", true);
+    workers = data->getParameter("WORKERS_START", false);
     minerals = data->getParameter("MINERALS_START", true);
     vespene = data->getParameter("VESPENE_START", true);
 
