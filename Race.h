@@ -63,11 +63,13 @@ protected:
     // private helper functions for advanceTimeStep
     // - update the current resources depending on the worker assignment
     virtual void updateResources() = 0;
-    // - advance the building process, returns 1 if there's still sth to do
+    // - advance the building process, returns -2 if the simulation failed
     virtual void advanceBuildingProcess() = 0;
     // - activates and manages the special ability - race dependent
-    virtual void specialAbility() = 0;
-    // - start new building process if possible, returns 1 if there are buildings left
+    //   returns 1 if ability was activated, otherwise 0
+    virtual int specialAbility() = 0;
+    // - start new building process if possible, returns 1 if a building was build
+    //   returns -2 if the simulation process failed
     virtual int startBuildingProcess() = 0;
     // - distribute workers depending on the strategy
     void distributeWorkers();

@@ -49,7 +49,6 @@ int main(int argc, char* argv[]){
     }else if(!race_name.compare("zerg")){
         cout << "Use a Zerg object!" << "\n";
     }else if(!race_name.compare("protoss")){
-        cout << "Use a Protoss object!" << "\n";
         Protoss prot(buildorder);
         int ret;
         while((ret = prot.advanceOneTimeStep())){

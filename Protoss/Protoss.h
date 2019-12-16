@@ -13,7 +13,7 @@ public:
 
     void updateResources();
     void advanceBuildingProcess();
-    void specialAbility();
+    int specialAbility();
     int startBuildingProcess();
 
 };

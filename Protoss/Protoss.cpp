@@ -63,17 +63,19 @@ void Protoss::advanceBuildingProcess(){
     }
 }
 
-void Protoss::specialAbility(){
+int Protoss::specialAbility(){
     // TODO can this event be Added by other buildings
     // some more have energy!
     int cost = data->getParameter("CHRONOBOOST_ENERGY_COST", true);
     if(energy >= cost && chrono_boost == 0){
         energy -= cost;
         chrono_boost = data->getParameter("CHRONOBOOST_DURATION", false);
-        addEvent("special", "nexus_0", "nexus_0");
+        addEvent("special", "chronoboost", "Nexus_0", "Nexus_0");
+        return 1;
     }
     if(chrono_boost > 0)
         chrono_boost --;
+    return 0;
 }
 
 int Protoss::startBuildingProcess(){

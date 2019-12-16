@@ -37,8 +37,12 @@ int Race::advanceOneTimeStep(){
     // Do all neccessary actions (see header file)
     updateResources();
     advanceBuildingProcess();
-    specialAbility();
-    int ret = startBuildingProcess();
+    // check if special ability was activated
+    // only one action at a timestep possible
+    // -> no building process possible anymore
+    int ret = specialAbility();
+    if(!ret)
+        ret = startBuildingProcess();
     if(ret == -2){
         // building can never be build!
         // exit process
@@ -94,7 +98,7 @@ void Race::addEvent(std::string type, std::string name, std::string i1, std::str
 }
 
 void Race::addEventsToJSON(bool init){
-    if(events.size() == 0)
+    if(events.size() == 0 && !init)
         return;
     if(init){
         JSON js;
@@ -117,6 +121,7 @@ void Race::addEventsToJSON(bool init){
         }
         js.events.push_back(ev);
         js.time = currentTime;
+        json.push_back(js);
     }else{
         JSON js;
         js.time = currentTime;
@@ -138,7 +143,9 @@ void Race::outputJSON(){
     for(std::vector<JSON>::iterator it = json.begin(); it != json.end(); it++) {
         if(it->time == 0){
             std::cout << "{\n";
-            //std::cout << "\t\"buildlistValid\": 1,\n";
+            // TODO only set valid when simulation worked
+            // if not valid we actually don't print the JSON
+            std::cout << "\t\"buildlistValid\": 1,\n";
             Unit cur = finished.front();
             std::cout << "\t\"game\": \"" << data->getAttributeString(cur.getName(), DataAcc::race) << "\",\n";
             std::cout << "\t\"initialUnits\": {\n";
@@ -150,9 +157,9 @@ void Race::outputJSON(){
                 for(std::vector<int>::iterator it3 = it2->ids.begin(); it3 != it2->ids.end(); it3++) {
                     i2 ++;
                     if(i2 == it2->ids.size()){
-                        std::cout << "\t\t\t\"" << it2->name << "_" << *it3 << "\",\n";
-                    }else{
                         std::cout << "\t\t\t\"" << it2->name << "_" << *it3 << "\"\n";
+                    }else{
+                        std::cout << "\t\t\t\"" << it2->name << "_" << *it3 << "\",\n";
                     }
                 }
                 i1++;
@@ -164,10 +171,10 @@ void Race::outputJSON(){
             }
 
             std::cout << "\t},\n";
+            std::cout << "\t\"messages\": [\n";
 
         }else{
 
-            std::cout << "\t\"messages\": [\n";
             std::cout << "\t\t{\n";
             std::cout << "\t\t\t\"time\": " << it->time << ",\n";
             std::cout << "\t\t\t\"status\": {\n";
@@ -175,57 +182,60 @@ void Race::outputJSON(){
             std::cout << "\t\t\t\t\"workers\": {\n";
             std::cout << "\t\t\t\t\t\"minerals\": " << it->work_minerals << ",\n";
             std::cout << "\t\t\t\t\t\"vespene\": " << it->work_vespene << "\n";
-            std::cout << "\t\t\t\t\"},\n";
+            std::cout << "\t\t\t\t},\n";
 
             std::cout << "\t\t\t\t\"resources\": {\n";
-            std::cout << "\t\t\t\t\t\"minerals\": " << it->minerals << ",\n";
-            std::cout << "\t\t\t\t\t\"vespene\": " << it->vespene << ",\n";
+            std::cout << "\t\t\t\t\t\"minerals\": " << (it->minerals / FIXEDPOINT_FACTOR) << ",\n";
+            std::cout << "\t\t\t\t\t\"vespene\": " << (it->vespene / FIXEDPOINT_FACTOR) << ",\n";
             std::cout << "\t\t\t\t\t\"supply-used\": " << it->supply_used << ",\n";
             std::cout << "\t\t\t\t\t\"supply\": " << it->supply << "\n";
-            std::cout << "\t\t\t\t\"}\n";
-            std::cout << "\t\t\t\"},\n";
+            std::cout << "\t\t\t\t}\n";
+            std::cout << "\t\t\t},\n";
 
 
             std::cout << "\t\t\t\"events\": [\n";
             size_t i1 = 0;
             for(std::vector<Event>::iterator it2 = it->events.begin(); it2 != it->events.end(); it2++) {
                 std::cout << "\t\t\t\t{\n";
-                std::cout << "\t\t\t\t\"type\": " << "\"" << it2->type << "\",\n";
-                std::cout << "\t\t\t\t\"name\": " << "\"" << it2->name << "\",\n";
+                std::cout << "\t\t\t\t\t\"type\": " << "\"" << it2->type << "\",\n";
+                std::cout << "\t\t\t\t\t\"name\": " << "\"" << it2->name << "\",\n";
                 if(it2->type == "build-start"){
-                    std::cout << "\t\t\t\t\"producerID\": " << "\"" << it2->name << "_" << it2->info1 << "\",\n";
+                    std::cout << "\t\t\t\t\t\"producerID\": " << "\"" << it2->info1 << "\"\n";
                 }else if(it2->type == "special"){
-                    std::cout << "\t\t\t\t\"targetBuilding\": " << "\"" << it2->info1 << "\",\n";
-                    std::cout << "\t\t\t\t\"triggeredBy\": " << "\"" << it2->info2 << "\",\n";
+                    std::cout << "\t\t\t\t\t\"targetBuilding\": " << "\"" << it2->info1 << "\",\n";
+                    std::cout << "\t\t\t\t\t\"triggeredBy\": " << "\"" << it2->info2 << "\"\n";
                 }else if(it2->type == "build-end"){
-                    std::cout << "\t\t\t\t\"producerID\": " << "\"" << it2->name << "_" << it2->info1 << "\",\n";
-                    std::cout << "\t\t\t\t\"producerIDs\": [\n";
+                    std::cout << "\t\t\t\t\t\"producerID\": " << "\"" << it2->info1 << "\",\n";
+                    std::cout << "\t\t\t\t\t\"producerIDs\": [\n";
 
                     size_t i2 = 0;
                     for(std::vector<int>::iterator it3 = it2->ids.begin(); it3 != it2->ids.end(); it3++) {
                         i2 ++;
                         if(i2 == it2->ids.size()){
-                            std::cout << "\t\t\t\t\t\"" << it2->name << "_" << *it3 << "\"\n";
+                            std::cout << "\t\t\t\t\t\t\"" << it2->name << "_" << *it3 << "\"\n";
                         }else{
-                            std::cout << "\t\t\t\t\t\"" << it2->name << "_" << *it3 << "\",\n";
+                            std::cout << "\t\t\t\t\t\t\"" << it2->name << "_" << *it3 << "\",\n";
                         }
                     }
-                    std::cout << "\t\t\t\t]\n";
+                    std::cout << "\t\t\t\t\t]\n";
                 }
                 i1 ++;
                 if(i1 == it->events.size()){
-                    std::cout << "\t\t\t},\n";
+                    std::cout << "\t\t\t\t}\n";
                 }else{
-                    std::cout << "\t\t\t}\n";
+                    std::cout << "\t\t\t\t},\n";
                 }
             }
+            std::cout << "\t\t\t]\n";
 
             count ++;
-            if(count == json.size()){
+            if(count == (json.size()-1)){
                 std::cout << "\t\t}\n";
             }else{
                 std::cout << "\t\t},\n";
             }
         }
     }
+    std::cout << "\t]\n";
+    std::cout << "}\n";
 }
