@@ -8,8 +8,6 @@
 /************************ Class Unit ***************************
  * A class representing a Building or a Unit with its current
  * parameters
- *
- * TODO think about what else we need in here
  ***************************************************************/
 
 // global incrementing id variable to compare Unit Objects

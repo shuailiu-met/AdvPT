@@ -19,6 +19,7 @@ Race::Race(){
 
     supply = 0;
     supply_used = 0;
+    vespene_buildings = 0;
 }
 
 
@@ -45,19 +46,7 @@ int Race::advanceOneTimeStep(){
     }
     distributeWorkers();
 
-    // just some testing stuff for now
-    //std::cout << "Workers: " << workers << ", Minerals: " << minerals;
-    //std::cout << ", Vespene: " << vespene << ", Supply: " << supply << "\n";
-
-    /*for(std::list<Unit>::iterator it = future.begin(); it != future.end(); it++) {
-        std::cout << (*it).getName() << " : ";
-        std::cout << (*it).getTimeLeft() << "\n";
-    }
-    for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
-        std::cout << (*it).getName() << " : ";
-        std::cout << (*it).getTimeLeft() << "\n";
-    }*/
-
+    // add all events added at this timestep to json
     addEventsToJSON();
 
     if((building.size() + future.size()) == 0)
@@ -67,10 +56,16 @@ int Race::advanceOneTimeStep(){
 
 // implement worker distribution strategy here
 void Race::distributeWorkers(){
-    // TODO implement
-    // placeholder to test simulation
-    worker_minerals = 6;
-    worker_vespene = 6;
+    // distrubute as much workers as possible to vespene
+    worker_vespene = (workers <= vespene_buildings * 3) ? workers : vespene_buildings * 3;
+    worker_minerals = workers - worker_vespene;
+    // normally we need more minerals than we need vespine
+    // => redistribute if we are have less minerals
+    // TODO play aroud with this and see which distribution has good results
+    if(minerals < 2*vespene){
+        worker_minerals += worker_vespene;
+        worker_vespene = 0;
+    }
 }
 
 void Race::addEvent(std::string type, std::string name, std::string i1, std::string i2, std::vector<int> *ids){
@@ -201,7 +196,7 @@ void Race::outputJSON(){
                     std::cout << "\t\t\t\t\t\"triggeredBy\": " << "\"" << it2->info2 << "\"\n";
                 }else if(it2->type == "build-end"){
                     std::cout << "\t\t\t\t\t\"producerID\": " << "\"" << it2->info1 << "\",\n";
-                    std::cout << "\t\t\t\t\t\"producerIDs\": [\n";
+                    std::cout << "\t\t\t\t\t\"producedIDs\": [\n";
 
                     size_t i2 = 0;
                     for(std::vector<int>::iterator it3 = it2->ids.begin(); it3 != it2->ids.end(); it3++) {

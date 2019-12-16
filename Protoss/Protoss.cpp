@@ -3,8 +3,6 @@
 #include <string>
 
 Protoss::Protoss(std::vector<std::string> buildorder){
-    // TODO what is the parameter "BASIS_START"? Maybe count or time?
-
     // set race specific attributes
     energy = data->getAttributeValue("Nexus", DataAcc::start_energy, true);
     chrono_boost = 0;
@@ -24,6 +22,7 @@ Protoss::Protoss(std::vector<std::string> buildorder){
         future.push_back(u);
     }
 
+    worker_minerals = workers;
 }
 
 void Protoss::updateResources(){
@@ -47,11 +46,8 @@ void Protoss::advanceBuildingProcess(){
     // walk over all buildings and update build time
     std::vector<Unit> finishedTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
-        if(chrono_boost > 0){
-            it->updateTime(data->getParameter("CHRONOBOOST_SPEEDUP", true));
-        }else{
-            it->updateTime(1 * FIXEDPOINT_FACTOR);
-        }
+        it->updateTime(1 * FIXEDPOINT_FACTOR);
+
         // don't remove element while iterating over list
         if(it->isFinished()){
             finishedTemp.push_back(*it);
@@ -73,6 +69,8 @@ void Protoss::advanceBuildingProcess(){
         std::vector<int> i = {it->getId()};
         if(it->getName() == "Probe")
             workers++;
+        if(it->getName() == "Assimilator")
+            vespene_buildings += 1;
         addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
     }
 }
@@ -84,9 +82,12 @@ int Protoss::specialAbility(){
     if(energy >= cost && chrono_boost == 0){
         energy -= cost;
         chrono_boost = data->getParameter("CHRONOBOOST_DURATION", false);
-        addEvent("special", "chronoboost", "Nexus_0", "Nexus_0");
-        return 1;
+        //addEvent("special", "chronoboost", "Nexus_0", "Nexus_0");
+        //return 1;
     }
+    // TODO update chronoboosted units
+    //if(chrono_boost > 0){
+    //    it->updateTime(data->getParameter("CHRONOBOOST_SPEEDUP", true));
     if(chrono_boost > 0)
         chrono_boost --;
     return 0;
@@ -145,11 +146,11 @@ int Protoss::startBuildingProcess(){
             // check if producer is occupied
             // TODO does 'producer_occupied' flag indicate that this building is
             // occupied when producing or that the production building of this building is occupied
-            if(data->getAttributeString(prod, DataAcc::production_state) == "producer_not_occupied"){
+            if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_not_occupied"){
                 // we just need the buiding -> no need for occupation
                 prodOK = true;
                 break;
-            }else if(data->getAttributeString(prod, DataAcc::production_state) == "producer_occupied"){
+            }else if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_occupied"){
                 // we need to register the producer and check for free capacity
                 if(!it->isOccupied()){
                     it->incOccupiedBy();

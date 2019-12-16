@@ -55,6 +55,7 @@ protected:
     int vespene;
     int supply;
     int supply_used;
+    int vespene_buildings;
 
     // worker distribution
     int worker_minerals;

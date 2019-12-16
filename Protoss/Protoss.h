@@ -15,6 +15,7 @@ public:
     void advanceBuildingProcess();
     int specialAbility();
     int startBuildingProcess();
+    void distributeWorkers();
 
 };
 #endif
