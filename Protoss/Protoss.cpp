@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-Protoss::Protoss(std::vector<std::string> buildorder) : Race{buildorder}{
+Protoss::Protoss(std::vector<std::string> buildorder){
     // TODO what is the parameter "BASIS_START"? Maybe count or time?
 
     // set race specific attributes
@@ -11,7 +11,19 @@ Protoss::Protoss(std::vector<std::string> buildorder) : Race{buildorder}{
     supply = data->getAttributeValue("Nexus", DataAcc::supply_provided, false);
 
     // build the starting unit
-    finished.push_back(data->getUnit("Nexus"));
+    for(int i = 0; i < data->getParameter("BASIS_START"); i++)
+        finished.push_back(data->getUnit("Nexus"));
+    for(int i = 0; i < data->getParameter("WORKERS_START"); i++){
+        finished.push_back(data->getUnit("Probe"));
+        workers++;
+        supply_used += data->getAttributeValue("Probe", DataAcc::supply_cost, false);
+    }
+    // build buildings and add them to list
+    for(std::vector<std::string>::iterator it = buildorder.begin(); it != buildorder.end(); it++) {
+        Unit u = data->getUnit(*it);
+        future.push_back(u);
+    }
+
 }
 
 void Protoss::updateResources(){
@@ -59,6 +71,8 @@ void Protoss::advanceBuildingProcess(){
         building.remove(*it);
         finished.push_back(*it);
         std::vector<int> i = {it->getId()};
+        if(it->getName() == "Probe")
+            workers++;
         addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
     }
 }
@@ -155,7 +169,7 @@ int Protoss::startBuildingProcess(){
                 prodExists = true;
             }
         }
-        // TODO use value to indicate stopping of simulation
+        // return value to indicate stopping of simulation
         if(!prodExists)
             return -2;
     }

@@ -57,7 +57,6 @@ public:
     Unit(std::string n, int time, int occ_limit, bool unit,int se,int me) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit), start_energy(se), max_energy(me){
         // set id
         id = global_id;
-        id = 0;
         global_id++;
 
         // set values

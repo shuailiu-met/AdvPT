@@ -1,24 +1,19 @@
 #include "Race.h"
 #include <iostream>
 
-Race::Race(std::vector<std::string> buildings){
+Race::Race(){
     // create DataAcc object
     data = new DataAcc("res/unit_db.csv", "res/parameters.csv");
 
     // set simulation time to zero
     currentTime = 0;
 
-    // build buildings and add them to list
-    for(std::vector<std::string>::iterator it = buildings.begin(); it != buildings.end(); it++) {
-        Unit u = data->getUnit(*it);
-        future.push_back(u);
-    }
-
     // init resources
-    workers = data->getParameter("WORKERS_START", false);
+    //workers = data->getParameter("WORKERS_START", false);
     minerals = data->getParameter("MINERALS_START", true);
     vespene = data->getParameter("VESPENE_START", true);
 
+    workers = 0;
     worker_minerals = 0;
     worker_vespene = 0;
 
@@ -163,7 +158,7 @@ void Race::outputJSON(){
                     }
                 }
                 i1++;
-                if(i2 == it->events.size()){
+                if(i1 == it->events.size()){
                     std::cout << "\t\t]\n";
                 }else{
                     std::cout << "\t\t],\n";

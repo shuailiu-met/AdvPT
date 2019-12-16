@@ -89,7 +89,7 @@ protected:
 public:
     // standard constructor
     // gets a vector of buildings to be build in that order
-    Race(std::vector<std::string> buildings);
+    Race();
     ~Race(){}
 
     // is called from the simulation to advance on time step
