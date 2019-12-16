@@ -45,7 +45,6 @@ public:
     Unit(std::string n, int time, int occ_limit, bool unit) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit){
         // set id
         id = global_id;
-        id = 0;
         global_id++;
 
         // set values
