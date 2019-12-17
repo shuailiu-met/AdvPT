@@ -103,7 +103,13 @@ public:
 
     //get the energy now, use start_energy as a variable which changes every time_step(for comprehension: the start energy of next time step)
     int currentEnergy(){return start_energy;}
-    void setEnergy(int add){start_energy += add;}
+    void setEnergy(int add){
+        if((start_energy + add) > max_energy){
+            start_energy = max_energy;
+        }else{
+            start_energy += add;
+        }
+    }
     int maxEnergy(){return max_energy;}
 
     // comparison operators, these are needed to remove objects from a list

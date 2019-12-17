@@ -2,12 +2,13 @@
 #define PROTOSS_H
 
 #include "../Race.h"
+#include <unordered_map>
 
 class Protoss: public Race{
 private:
-    int energy;
-    int chrono_boost;
-    Unit *boosted;
+    std::list<Unit> boosted;
+    std::list<Unit> hasEnergy;
+    std::unordered_map<std::string, int> chronoboost;
 public:
     Protoss(std::vector<std::string> buildorder);
 

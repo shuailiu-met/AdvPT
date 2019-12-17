@@ -4,13 +4,15 @@
 
 Protoss::Protoss(std::vector<std::string> buildorder){
     // set race specific attributes
-    energy = data->getAttributeValue("Nexus", DataAcc::start_energy, true);
-    chrono_boost = 0;
+    //energy = data->getAttributeValue("Nexus", DataAcc::start_energy, true);
     supply = data->getAttributeValue("Nexus", DataAcc::supply_provided, false);
 
     // build the starting unit
-    for(int i = 0; i < data->getParameter("BASIS_START"); i++)
-        finished.push_back(data->getUnit("Nexus"));
+    for(int i = 0; i < data->getParameter("BASIS_START"); i++){
+        Unit u = data->getUnit("Nexus");
+        finished.push_back(u);
+        hasEnergy.push_back(u);
+    }
     for(int i = 0; i < data->getParameter("WORKERS_START"); i++){
         finished.push_back(data->getUnit("Probe"));
         workers++;
@@ -26,13 +28,11 @@ Protoss::Protoss(std::vector<std::string> buildorder){
 }
 
 void Protoss::updateResources(){
-    // TODO more than one building has energy
     // update energy of nexus
     int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
-    int energy_max = data->getAttributeValue("Nexus", DataAcc::max_energy, true);
-    int energy_tmp = energy + energy_regen;
-    energy = (energy_tmp > energy_max) ? energy_max : energy_tmp;
-
+    for(std::list<Unit>::iterator it = hasEnergy.begin(); it != hasEnergy.end(); it ++){
+        it->setEnergy(energy_regen);
+    }
     // update vespene and minerals
     if(worker_minerals > 0){
         minerals += worker_minerals * data->getParameter("MINERAL_HARVESTING", true);
@@ -46,8 +46,11 @@ void Protoss::advanceBuildingProcess(){
     // walk over all buildings and update build time
     std::vector<Unit> finishedTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
-        it->updateTime(1 * FIXEDPOINT_FACTOR);
-
+        if(chronoboost[it->getBuildBy()]){
+            it->updateTime(data->getParameter("CHRONOBOOST_SPEEDUP", true));
+        }else{
+            it->updateTime(1 * FIXEDPOINT_FACTOR);
+        }
         // don't remove element while iterating over list
         if(it->isFinished()){
             finishedTemp.push_back(*it);
@@ -71,25 +74,36 @@ void Protoss::advanceBuildingProcess(){
             workers++;
         if(it->getName() == "Assimilator")
             vespene_buildings += 1;
+        if(it->getName() == "Nexus")
+            hasEnergy.push_back(*it);
         addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
     }
 }
 
 int Protoss::specialAbility(){
-    // TODO can this event be Added by other buildings
-    // some more have energy!
-    int cost = data->getParameter("CHRONOBOOST_ENERGY_COST", true);
-    if(energy >= cost && chrono_boost == 0){
-        energy -= cost;
-        chrono_boost = data->getParameter("CHRONOBOOST_DURATION", false);
-        //addEvent("special", "chronoboost", "Nexus_0", "Nexus_0");
-        //return 1;
+    // TODO what is the best way of using this?
+    // - casting on which building or Unit
+    // - all building processes by this building are faster?
+    // - can it be cast multiple times qhile its still running?
+    std::unordered_map<std::string, int>::iterator it;
+    for(it = chronoboost.begin(); it != chronoboost.end(); it ++){
+        if(chronoboost[it->first] > 0){
+            chronoboost[it->first] = chronoboost[it->first] - 1;
+        }
     }
-    // TODO update chronoboosted units
-    //if(chrono_boost > 0){
-    //    it->updateTime(data->getParameter("CHRONOBOOST_SPEEDUP", true));
-    if(chrono_boost > 0)
-        chrono_boost --;
+
+    int cost = data->getParameter("CHRONOBOOST_ENERGY_COST", true);
+    for(std::list<Unit>::iterator it = hasEnergy.begin(); it != hasEnergy.end(); it ++){
+        // chrono boost can be activated
+        std::string id = it->getName() + "_" + std::to_string(it->getId());
+        if(it->currentEnergy() >= cost && chronoboost[id] == 0){
+            // TODO for the time being just activate it on itself
+            chronoboost[id] = data->getParameter("CHRONOBOOST_DURATION", false);
+            it->setEnergy(-cost);
+            addEvent("special", "chronoboost", id, id);
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -110,6 +124,8 @@ int Protoss::startBuildingProcess(){
         return 0;
     }
 
+    // TODO dependencies are 'or' because of upgrades not 'and'
+    // => implement (might not be important for protoss)
     // check dependencies of new Unit
     std::vector<std::string> deps = data->getAttributeVector(newUnit.getName(), DataAcc::dependencies);
     // iterate over finished list to check if we have all the dependencies
