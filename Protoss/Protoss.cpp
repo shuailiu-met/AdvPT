@@ -112,6 +112,11 @@ int Protoss::startBuildingProcess(){
         return 0;
     Unit newUnit = future.front();
 
+    // check if Unit is from the correct race
+    if(data->getAttributeString(newUnit.getName(), DataAcc::race) != "Prot"){
+        return -2;
+    }
+
     // check for resources
     int needMin = data->getAttributeValue(newUnit.getName(), DataAcc::minerals, true);
     int needVesp = data->getAttributeValue(newUnit.getName(), DataAcc::vespene, true);

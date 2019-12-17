@@ -30,20 +30,32 @@ int Race::advanceOneTimeStep(){
     }
     currentTime ++;
 
+    // stop simulating it it takes more than 1000 seconds
+    // see restrictions in 'project_part2.pdf'
+    if(currentTime > 1000){
+        invalidateJSON();
+        outputJSON();
+        return 0;
+    }
     // Do all neccessary actions (see header file)
     updateResources();
     advanceBuildingProcess();
     // check if special ability was activated
     // only one action at a timestep possible
     // -> no building process possible anymore
+    // see restrictions in 'project_part2.pdf'
     int ret = specialAbility();
     if(!ret)
         ret = startBuildingProcess();
     if(ret == -2){
         // building can never be build!
         // exit process
-        return ret;
+        addEventsToJSON();
+        invalidateJSON();
+        outputJSON();
+        return 0;
     }
+
     distributeWorkers();
 
     // add all events added at this timestep to json
@@ -68,7 +80,15 @@ void Race::distributeWorkers(){
     }
 }
 
+void Race::invalidateJSON(){
+    // in the init element valid is stored in minerals
+    // because minerals is unused
+    json[0].minerals = 0;
+}
+
 void Race::addEvent(std::string type, std::string name, std::string i1, std::string i2, std::vector<int> *ids){
+    // TODO check for multiple build finish events from the same producer
+    // IDs must be printed as array
     Event ev;
     ev.type = type;
     ev.name = name;
@@ -111,6 +131,9 @@ void Race::addEventsToJSON(bool init){
         }
         js.events.push_back(ev);
         js.time = currentTime;
+        // minerals member is used in the init element to indicate
+        // if the JSON is valid or not!!!
+        js.minerals = 1;
         json.push_back(js);
     }else{
         JSON js;
@@ -133,9 +156,9 @@ void Race::outputJSON(){
     for(std::vector<JSON>::iterator it = json.begin(); it != json.end(); it++) {
         if(it->time == 0){
             std::cout << "{\n";
-            // TODO only set valid when simulation worked
-            // if not valid we actually don't print the JSON
-            std::cout << "\t\"buildlistValid\": 1,\n";
+            // in the init Element the valid bit is stored in minerals member
+            // saves an extra mostly unused member
+            std::cout << "\t\"buildlistValid\": " << it->minerals << ",\n";
             Unit cur = finished.front();
             std::cout << "\t\"game\": \"" << data->getAttributeString(cur.getName(), DataAcc::race) << "\",\n";
             std::cout << "\t\"initialUnits\": {\n";

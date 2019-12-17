@@ -36,10 +36,6 @@ int main(int argc, char* argv[]){
     vector<string> buildorder;
     buildorder = readtxt(buildorder, argv[2]);//read buildlist
 
-    /*for(vector<string>::iterator it = buildorder.begin(); it != buildorder.end(); it++){
-        cout << *it << endl;
-    }*/
-
     // get racename
     string race_name(argv[1]);
 
@@ -51,12 +47,7 @@ int main(int argc, char* argv[]){
     }else if(!race_name.compare("protoss")){
         Protoss prot(buildorder);
         int ret;
-        while((ret = prot.advanceOneTimeStep())){
-            if(ret == -2){
-                cout << "Error! The given buildorder is invalid!\n";
-                exit(EXIT_FAILURE);
-            }
-        }
+        while((ret = prot.advanceOneTimeStep()));
     }else{
         cout << "Unknown race!" << endl;
         exit(EXIT_FAILURE);

@@ -86,6 +86,7 @@ protected:
     void addEvent(std::string type, std::string name, std::string i1, std::string i2 = "", std::vector<int> *ids = nullptr);
 
     void addEventsToJSON(bool init = false);
+    void invalidateJSON();
 
 public:
     // standard constructor
