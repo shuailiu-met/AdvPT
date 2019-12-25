@@ -83,6 +83,8 @@ int DataAcc::parseConfigLine(std::string line){
 
 
 DataAcc::DataAcc(std::string unitdb, std::string config){
+    cur_unit_id = 0;
+
     std::fstream fs;
 
     // open and parse unit database file
@@ -178,13 +180,15 @@ Unit DataAcc::getUnit(std::string name){
         assert(false);
     }
 
-    // Here for the units or buildings who has energy specialisation,use the another constructor of Unit
     Unit *u;
-    if(this->getAttributeValue(name, this->start_energy)!=0){
-        u = new Unit(name, this->getAttributeValue(name, this->build_time, true), this->getAttributeValue(name, this->occupy_limit), unit, this->getAttributeValue(name, this->start_energy, true), this->getAttributeValue(name, this->max_energy, true));
-    }
-    else{
-        u = new Unit(name, this->getAttributeValue(name, this->build_time, true), this->getAttributeValue(name, this->occupy_limit), unit);
-    }
+    int build_time = this->getAttributeValue(name, this->build_time, true);
+    int occ_limit = this->getAttributeValue(name, this->occupy_limit);
+    int start_energy = this->getAttributeValue(name, this->start_energy, true);
+    int max_energy = this->getAttributeValue(name, this->max_energy, true);
+
+    u = new Unit(name, build_time, occ_limit, unit, start_energy, max_energy, cur_unit_id);
+
+    cur_unit_id ++;
+
     return *u;
 }

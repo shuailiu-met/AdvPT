@@ -9,11 +9,6 @@
 
 using namespace std;
 
-// definition for global id for Units
-// See Unit.h for details
-// TODO not really a good place for the definition -> change
-int global_id = 0;
-
 vector<string> readtxt(vector<string> a, string file){
     string buffer;
     fstream outFile;

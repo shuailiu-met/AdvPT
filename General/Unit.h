@@ -13,7 +13,6 @@
 // global incrementing id variable to compare Unit Objects
 // TODO maybe not the best solutions for this problem
 // -> global data is always bad
-extern int global_id;
 
 class Unit{
 private:
@@ -39,24 +38,11 @@ private:
     int max_energy;
 
 public:
-    // contructor
-    Unit(std::string n, int time, int occ_limit, bool unit) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit){
-        // set id
-        id = global_id;
-        global_id++;
 
-        // set values
-        name = n;
-        occupied_by_cur = 0;
-        occupy = nullptr;
-    }
-
-    //specified constructor here
-    Unit(std::string n, int time, int occ_limit, bool unit,int se,int me) : time_left(time), occupied_by_limit(occ_limit), is_unit(unit), start_energy(se), max_energy(me){
-        // set id
-        id = global_id;
-        global_id++;
-
+    // constructor
+    Unit(std::string n, int time, int occ_limit, bool unit, int se = 0, int me = 0, int cid = 0)
+    : id(cid), time_left(time), occupied_by_limit(occ_limit), is_unit(unit),
+    start_energy(se), max_energy(me){
         // set values
         name = n;
         occupied_by_cur = 0;

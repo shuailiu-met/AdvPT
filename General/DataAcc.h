@@ -30,6 +30,9 @@ private:
     int parseCsvLine(std::string, bool);
     // parses the config file lines and fills the data structures above
     int parseConfigLine(std::string);
+
+    // incrementing unit id
+    int cur_unit_id;
 public:
 
     // enum for easy access to attributes
