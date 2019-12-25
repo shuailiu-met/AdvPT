@@ -83,7 +83,7 @@ protected:
     // add Event to JSON
     // Supported Types: "build-start", "build-end", "special"
     // for parameter see examples on https://www10.cs.fau.de/advptSC2/
-    void addEvent(std::string type, std::string name, std::string i1, std::string i2 = "", std::vector<int> *ids = nullptr);
+    void addEvent(std::string type, std::string name, std::string i1, std::string i2 = "", int id = -1);
 
     void addEventsToJSON(bool init = false);
     void invalidateJSON();

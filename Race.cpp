@@ -30,13 +30,17 @@ int Race::advanceOneTimeStep(){
     }
     currentTime ++;
 
-    // stop simulating it it takes more than 1000 seconds
+    // stop simulating it if takes more than 1000 seconds
     // see restrictions in 'project_part2.pdf'
     if(currentTime > 1000){
         invalidateJSON();
         outputJSON();
         return 0;
     }
+    // TODO: restriction from pdf: there can be at most 2 vespine buildings per base!
+    // Does per base mean "per base building" or max 2 in one simulation?
+
+
     // Do all neccessary actions (see header file)
     updateResources();
     advanceBuildingProcess();
@@ -49,8 +53,6 @@ int Race::advanceOneTimeStep(){
         ret = startBuildingProcess();
     if(ret == -2){
         // building can never be build!
-        // exit process
-        addEventsToJSON();
         invalidateJSON();
         outputJSON();
         return 0;
@@ -68,16 +70,16 @@ int Race::advanceOneTimeStep(){
 
 // implement worker distribution strategy here
 void Race::distributeWorkers(){
-    // distrubute as much workers as possible to vespene
+    // as much workers as possible to vespene
     worker_vespene = (workers <= vespene_buildings * 3) ? workers : vespene_buildings * 3;
     worker_minerals = workers - worker_vespene;
     // normally we need more minerals than we need vespine
-    // => redistribute if we are have less minerals
+    // => redistribute if we have less minerals
     // TODO play aroud with this and see which distribution has good results
-    if(minerals < 2*vespene){
+    /*if(minerals < 2*vespene){
         worker_minerals += worker_vespene;
         worker_vespene = 0;
-    }
+    }*/
 }
 
 void Race::invalidateJSON(){
@@ -86,8 +88,17 @@ void Race::invalidateJSON(){
     json[0].minerals = 0;
 }
 
-void Race::addEvent(std::string type, std::string name, std::string i1, std::string i2, std::vector<int> *ids){
-    // TODO check for multiple build finish events from the same producer
+void Race::addEvent(std::string type, std::string name, std::string i1, std::string i2, int id){
+    // check for multiple build finish events from the same producer
+    // TODO not tested yet -> not needed in Protoss
+    if(type == "build-end"){
+        for(std::vector<Event>::iterator it = events.begin(); it != events.end(); it++) {
+            if(it->type == "build-end" && it->info1 == i1 && it->name == name){
+                it->ids.push_back(id);
+                return;
+            }
+        }
+    }
     // IDs must be printed as array
     Event ev;
     ev.type = type;
@@ -96,7 +107,7 @@ void Race::addEvent(std::string type, std::string name, std::string i1, std::str
         ev.info1 = i1;
     }else if(type == "build-end"){
         ev.info1 = i1;
-        ev.ids = *ids;
+        ev.ids.push_back(id);
     }else if(type == "special"){
         ev.info1 = i1;
         ev.info2 = i2;
@@ -156,11 +167,16 @@ void Race::outputJSON(){
     for(std::vector<JSON>::iterator it = json.begin(); it != json.end(); it++) {
         if(it->time == 0){
             std::cout << "{\n";
-            // in the init Element the valid bit is stored in minerals member
-            // saves an extra mostly unused member
-            std::cout << "\t\"buildlistValid\": " << it->minerals << ",\n";
             Unit cur = finished.front();
             std::cout << "\t\"game\": \"" << data->getAttributeString(cur.getName(), DataAcc::race) << "\",\n";
+            // in the init Element the valid bit is stored in minerals member
+            // saves an extra mostly unused member
+            if(it->minerals == 0){
+                std::cout << "\t\"buildlistValid\": " << it->minerals << "\n";
+                std::cout << "}\n";
+                return;
+            }
+            std::cout << "\t\"buildlistValid\": " << it->minerals << ",\n";
             std::cout << "\t\"initialUnits\": {\n";
 
             size_t i1 = 0;

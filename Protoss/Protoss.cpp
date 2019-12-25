@@ -4,7 +4,6 @@
 
 Protoss::Protoss(std::vector<std::string> buildorder){
     // set race specific attributes
-    //energy = data->getAttributeValue("Nexus", DataAcc::start_energy, true);
     supply = data->getAttributeValue("Nexus", DataAcc::supply_provided, false);
 
     // build the starting unit
@@ -69,19 +68,20 @@ void Protoss::advanceBuildingProcess(){
     for(std::vector<Unit>::iterator it = finishedTemp.begin(); it != finishedTemp.end(); it++) {
         building.remove(*it);
         finished.push_back(*it);
-        std::vector<int> i = {it->getId()};
+
         if(it->getName() == "Probe")
             workers++;
         if(it->getName() == "Assimilator")
             vespene_buildings += 1;
         if(it->getName() == "Nexus")
             hasEnergy.push_back(*it);
-        addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
+        addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
     }
 }
 
 int Protoss::specialAbility(){
     // TODO what is the best way of using this?
+    // - multiple nexus possible
     // - casting on which building or Unit
     // - all building processes by this building are faster?
     // - can it be cast multiple times qhile its still running?
@@ -123,7 +123,10 @@ int Protoss::startBuildingProcess(){
     int needSupply = data->getAttributeValue(newUnit.getName(), DataAcc::supply_cost, false);
     // we don't meet the requirements
     if(needMin > minerals || needVesp > vespene || needSupply > (supply - supply_used)){
-        // if we don't have enough supply and no buildings are buils -> cancel
+        // if no vespene buildings, return -2
+        if(needVesp > vespene && building.size() == 0 && vespene_buildings == 0)
+            return -2;
+        // if we don't have enough supply and no buildings are build -> cancel
         if(needSupply > (supply - supply_used) && building.size() == 0)
             return -2;
         return 0;
@@ -133,12 +136,14 @@ int Protoss::startBuildingProcess(){
     // => implement (might not be important for protoss)
     // check dependencies of new Unit
     std::vector<std::string> deps = data->getAttributeVector(newUnit.getName(), DataAcc::dependencies);
-    // iterate over finished list to check if we have all the dependencies
+    // iterate over finished list to check if we have the dependencies
     for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
         bool found = false;
         for(std::list<Unit>::iterator it2 = finished.begin(); it2 != finished.end(); it2++) {
-            if(it2->getName() == *it)
+            if(it2->getName() == *it){
                 found = true;
+                break;
+            }
         }
         // check if the needed dependency is currently build
         if(!found){
@@ -148,6 +153,8 @@ int Protoss::startBuildingProcess(){
             }
             // return a value which tells us to stop simulation
             return -2;
+        }else{
+            break;
         }
     }
 
@@ -164,9 +171,7 @@ int Protoss::startBuildingProcess(){
             std::string s = std::to_string(it->getId());
             prodName = it->getName() + "_" + s;
             newUnit.setBuildBy(prodName);
-            // check if producer is occupied
-            // TODO does 'producer_occupied' flag indicate that this building is
-            // occupied when producing or that the production building of this building is occupied
+            // check if producer will be occupied
             if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_not_occupied"){
                 // we just need the buiding -> no need for occupation
                 prodOK = true;
@@ -179,6 +184,8 @@ int Protoss::startBuildingProcess(){
                     prodOK = true;
                     break;
                 }
+            }else{
+                assert(false);
             }
         }
     }

@@ -39,20 +39,24 @@ int main(int argc, char* argv[]){
     // get racename
     string race_name(argv[1]);
 
+    Race *simRace = nullptr;
     // get the given race
     if(!race_name.compare("terran")){
         cout << "Use a Terran object!" << "\n";
     }else if(!race_name.compare("zerg")){
         cout << "Use a Zerg object!" << "\n";
     }else if(!race_name.compare("protoss")){
-        Protoss prot(buildorder);
-        int ret;
-        while((ret = prot.advanceOneTimeStep()));
+        simRace = new Protoss(buildorder);
+        //Protoss prot(buildorder);
+        //int ret;
+        //while((ret = prot.advanceOneTimeStep()));
     }else{
         cout << "Unknown race!" << endl;
         exit(EXIT_FAILURE);
     }
 
+    int ret;
+    while((ret = simRace->advanceOneTimeStep()));
 
     return 0;
 }

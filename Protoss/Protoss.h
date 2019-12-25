@@ -6,7 +6,6 @@
 
 class Protoss: public Race{
 private:
-    std::list<Unit> boosted;
     std::list<Unit> hasEnergy;
     std::unordered_map<std::string, int> chronoboost;
 public:
