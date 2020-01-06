@@ -28,7 +28,7 @@ public:
     void advanceBuildingProcess();
     int specialAbility();
     int startBuildingProcess();
-    void distributeWorkers();
+    //void distributeWorkers();
     void larvaSelfGeneration();
 };
 
