@@ -1,6 +1,7 @@
 #include "Race.h"
 #include "Protoss/Protoss.h"
 #include "General/DataAcc.h"
+#include "Zerg/Zerg.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -30,6 +31,10 @@ int main(int argc, char* argv[]){
     // read buildorder file
     vector<string> buildorder;
     buildorder = readtxt(buildorder, argv[2]);//read buildlist
+    /*for (auto it = buildorder.begin();it!=buildorder.end();it++)
+    {
+        cout << *it << endl;
+    }*/
 
     // get racename
     string race_name(argv[1]);
@@ -39,7 +44,8 @@ int main(int argc, char* argv[]){
     if(!race_name.compare("terran")){
         cout << "Use a Terran object!" << "\n";
     }else if(!race_name.compare("zerg")){
-        cout << "Use a Zerg object!" << "\n";
+        //cout << "Use a Zerg object!" << "\n";
+        simRace = new Zerg(buildorder);
     }else if(!race_name.compare("protoss")){
         simRace = new Protoss(buildorder);
         //Protoss prot(buildorder);
