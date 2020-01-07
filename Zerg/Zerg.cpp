@@ -88,6 +88,7 @@ void Zerg::larvaSelfGeneration()
         Unit larva("Larva",larva_duration,1,true);
         building.push_back(larva);
         larva_producing++;
+        //std::cout << "larva begun" << std::endl;
     }
 }
 
@@ -95,15 +96,34 @@ void Zerg::larvaSelfGeneration()
 //TODO:think about the double Zerg
 void Zerg::advanceBuildingProcess(){
     // walk over all buildings and update build time
+    //TODO, Event ids
     std::vector<Unit> finishedTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
             it->updateTime(1 * FIXEDPOINT_FACTOR);
     // don't remove element while iterating over list
         if(it->isFinished()){
+             if(it->getName()=="injection")
+            {
+                std::string id = it->getName() + "_" + std::to_string(it->getId());
+                //std::cout << "injection fin" << std::endl;
+                inject_larva_num += inject_per;
+                building.remove(*it);
+                addEvent("special","injection_finished","","");
+            }
+            else if(it->getName()=="Larva")
+            {
+                larva_num++;
+                larva_producing--;
+                building.remove(*it);
+                //std::cout << "larva produce" << std::endl;
+            }
+            else
+            {
             std::string Building_state = data->getAttributeString(it->getName(),DataAcc::production_state);
 
             if(Building_state == "producer_consumed_at_end")
             {
+                //std::cout << "here" << std::endl;
                 std::vector<std::string> prod = data->getAttributeVector(it->getName(),DataAcc::producer);
                 for(auto it1 = prod.begin();it1!=prod.end();it1++)
                 {
@@ -112,27 +132,9 @@ void Zerg::advanceBuildingProcess(){
                     if(it2!=finished.end())
                     {
                         finished.remove(*it2);
+                        finishedTemp.push_back(*it);
                     }
                 }
-            }
-
-            if(it->getName()=="Larva")
-            {
-                larva_num++;
-                larva_producing--;
-                building.remove(*it);
-            }
-
-            else if(it->getName()=="injection")
-            {
-                inject_larva_num += inject_per;
-                building.remove(*it);
-            }
-
-            else if(it->getName()=="Queen")
-            {
-                Queenlist.push_back(*it);
-                finishedTemp.push_back(*it);
             }
             else
             {
@@ -143,6 +145,7 @@ void Zerg::advanceBuildingProcess(){
             if(occ != nullptr){
                 it->setOccupy(nullptr);
                 occ->decOccupyBy();
+            }
             }
             }
         }
@@ -161,6 +164,11 @@ void Zerg::advanceBuildingProcess(){
             supply += 6;
         if(it->getName() == "Overlord")
             supply += 8;
+        if(it->getName() == "Queen")
+        {
+            Queenlist.push_back(*it);
+            //std::cout <<"pushed" << std::endl;
+        }
         //std::vector<int> i = {it->getId()};
         //Zergling became 2 when finish building
         if(it->getName() == "Zergling")
@@ -377,6 +385,7 @@ int Zerg::startBuildingProcess()
                 //std::cout << newUnit.getName() <<std::endl;
                 addEvent("build-start", newUnit.getName(), prodName);
                 building.push_back(newUnit);
+                //std::cout << newUnit.getName() << std::endl;
                 future.remove(newUnit);
                 minerals -= mcost;
                 vespene -= vcost;
@@ -393,17 +402,21 @@ int Zerg::startBuildingProcess()
 int Zerg::specialAbility()
 {
     //TODO ,return 1,0 is now only considering 1 queen.
-    //TODO , not sure about the id and JSON
+    //TODO , event target ids
     for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
     {
         if((it->currentEnergy() >= inject_cost)&&(inject_larva_num < inject_max))
         {
             std::string id = it->getName() + "_" + std::to_string(it->getId());
             Unit in("injection",inject_duration,1,true);
+            //std::cout << in.getName() << std::endl;
             building.push_back(in);
             it->setEnergy(-inject_cost);
-            addEvent("special","injection",id,id);
+            /*std::string hat = "Hatchery"
+            auto target = find_if(finished.begin(),finished.end(),[])*/
+            addEvent("special","injection_begin","",id);
             return 1;
+            break;
         }
     }
     return 0;
