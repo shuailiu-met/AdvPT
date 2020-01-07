@@ -3,6 +3,8 @@
 #include <string>
 #include <algorithm>
 
+
+//problems now : zergling(actually queen problem) , invalid output, queen, why only 2
 Zerg::Zerg(std::vector<std::string> buildorder){
     mineral_harvesting = data->getParameter("MINERAL_HARVESTING", true);
     vespene_harvesting = data->getParameter("VESPENE_HARVESTING", true);
@@ -28,7 +30,8 @@ Zerg::Zerg(std::vector<std::string> buildorder){
         workers++;
     }
     finished.push_back(data->getUnit("Overlord"));
-    supply = 2;
+    supply = 14;
+    supply_used = 12;
 
 
     for(std::vector<std::string>::iterator it = buildorder.begin(); it != buildorder.end(); it++) {
@@ -63,6 +66,14 @@ void Zerg::updateResources()
     //std::cout << minerals << std::endl;
     //std::cout << vespene << std::endl;
     larvaSelfGeneration();
+    int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
+    for (auto it = Queenlist.begin();it!=Queenlist.end();it++)
+    {
+    if(it->currentEnergy() + energy_regen <= it->maxEnergy())
+    {
+        it->setEnergy(energy_regen);
+    }
+    }
 }
 
 //TODO: need to be done each time step for Zerg
@@ -114,11 +125,13 @@ void Zerg::advanceBuildingProcess(){
                 building.remove(*it);
             }
 
-            else{
-            if(it->getName()=="Queen")
+            else if(it->getName()=="Queen")
             {
                 Queenlist.push_back(*it);
+                finishedTemp.push_back(*it);
             }
+            else
+            {
             finishedTemp.push_back(*it);
             // add supply if building provides it
             // remove occupation
@@ -140,8 +153,23 @@ void Zerg::advanceBuildingProcess(){
             workers++;
         if(it->getName() == "Extractor")
             vespene_buildings += 1;
+        if(it->getName() == "Hatchery")
+            supply += 6;
+        if(it->getName() == "Overlord")
+            supply += 8;
         //std::vector<int> i = {it->getId()};
+        //Zergling became 2 when finish building
+        if(it->getName() == "Zergling")
+        {
+            Unit u = data->getUnit("Zergling");
+            finished.push_back(u);
+            addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
+            addEvent("build-end", it->getName(), it->getBuildBy(), "", u.getId());
+        }
+        else
+        {
          addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
+        }
     }
 }
 
@@ -154,6 +182,7 @@ int Zerg::startBuildingProcess()
     }
 
     Unit newUnit = future.front();
+       //std::cout << newUnit.getId() << std::endl;
     if(data->getAttributeString(newUnit.getName(),DataAcc::race)!="Zer")
     {
         return -2;
@@ -161,16 +190,17 @@ int Zerg::startBuildingProcess()
 
     //check resource
                 //std::cout << newUnit.getName() << std::endl;
-        int scost = data->getAttributeValue(newUnit.getName(),DataAcc::supply,false);
+        int scost = data->getAttributeValue(newUnit.getName(),DataAcc::supply_cost,false);
         int vcost = data->getAttributeValue(newUnit.getName(),DataAcc::vespene,true);
         int mcost = data->getAttributeValue(newUnit.getName(),DataAcc::minerals,true);
         if(newUnit.getName()=="Zergling")
         {
-            scost = -1;
+            scost = 1;
         }
-        std::cout << supply << std::endl;
+        //std::cout << larva_num << std::endl;
+        //std::cout << supply-supply_used << std::endl;
         //std::cout << mcost << std::endl;
-        if((supply+scost<0)||(vcost>vespene)||(mcost>minerals))
+        if((supply-supply_used-scost<0)||(vcost>vespene)||(mcost>minerals))
         {
                             //std::cout << newUnit.getName()<< std::endl;
             if((vcost>vespene)&&(building.size()==0)&&(vespene_buildings==0))
@@ -178,7 +208,7 @@ int Zerg::startBuildingProcess()
                 return -2;
             }
 
-            if((supply+scost<0)&&(building.size()==0))
+            if((supply-supply_used-scost<0)&&(building.size()==0))
             {
                 return -2;
             }
@@ -235,7 +265,6 @@ int Zerg::startBuildingProcess()
             auto findlarva = prod.begin();
             if((*findlarva == "Larva")&&(larva_num+inject_larva_num!=0))
             {
-
                 prod_exist = true;
                 cur_producer = "Larva";
                 prodName = "Larva";
@@ -243,15 +272,7 @@ int Zerg::startBuildingProcess()
             }
             else if((*findlarva == "Larva")&&(larva_num+inject_larva_num==0))
             {
-                std::string target1= "Larva";
-                std::string target2= "injection";
-                auto look = find_if(building.begin(),building.end(),[&target1](const Unit &u){return (u.getName()==target1);});
-                auto look2 = find_if(building.begin(),building.end(),[&target2](const Unit &u){return (u.getName()==target2);});
-                if((look!=building.end())||(look2!=building.end()))
-                {
                 return 0;
-                }
-                return -2;
             }
             else
             {
@@ -317,7 +338,7 @@ int Zerg::startBuildingProcess()
                     {
                         worker_minerals--;
                         workers = worker_minerals+worker_vespene;
-                        supply++;
+                        supply_used--;
                     }
                     prod_ok = true;
                 }
@@ -346,13 +367,13 @@ int Zerg::startBuildingProcess()
 
             if(prod_ok==true)
             {
-                std::cout << newUnit.getName() <<std::endl;
+                //std::cout << newUnit.getName() <<std::endl;
                 addEvent("build-start", newUnit.getName(), prodName);
                 building.push_back(newUnit);
                 future.remove(newUnit);
                 minerals -= mcost;
                 vespene -= vcost;
-                supply += scost;
+                supply_used += scost;
                 return 1;
             }
             }
@@ -366,7 +387,6 @@ int Zerg::specialAbility()
 {
     //TODO ,return 1,0 is now only considering 1 queen.
     //TODO , not sure about the id and JSON
-    int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
     for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
     {
         if((it->currentEnergy() >= inject_cost)&&(inject_larva_num < inject_max))
@@ -377,11 +397,6 @@ int Zerg::specialAbility()
             it->setEnergy(-inject_cost);
             addEvent("special","injection",id,id);
             return 1;
-        }
-
-        if(it->currentEnergy() + energy_regen <= it->maxEnergy())
-        {
-            it->setEnergy(energy_regen);
         }
     }
     return 0;
