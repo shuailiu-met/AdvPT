@@ -33,9 +33,13 @@ Zerg::Zerg(std::vector<std::string> buildorder){
     supply = 14;
     supply_used = 12;
 
-
     for(std::vector<std::string>::iterator it = buildorder.begin(); it != buildorder.end(); it++) {
         Unit u = data->getUnit(*it);
+        if(*it == "Zergling")
+        {
+            Unit p = data->getUnit("Zergling");
+            Zerglingpair.push_back(p);
+        }
         /*auto it2 = it++;
         if((*it == "Zergling")&&(*it2 == "Zergling"))
         {
@@ -161,10 +165,13 @@ void Zerg::advanceBuildingProcess(){
         //Zergling became 2 when finish building
         if(it->getName() == "Zergling")
         {
-            Unit u = data->getUnit("Zergling");
-            finished.push_back(u);
+            /*Unit u = data->getUnit("Zergling");
+            finished.push_back(u);*/
             addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
-            addEvent("build-end", it->getName(), it->getBuildBy(), "", u.getId());
+            auto pairit = Zerglingpair.begin();
+            finished.push_back(*pairit);
+            addEvent("build-end", pairit->getName(), it->getBuildBy(), "", pairit->getId());
+            Zerglingpair.remove(*pairit);
         }
         else
         {

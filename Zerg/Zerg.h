@@ -20,6 +20,7 @@ protected:
     int larva_producing;
     int inject_cost;
     std::list<Unit> Queenlist;
+    std::list<Unit> Zerglingpair;
 
 public:
     Zerg(std::vector<std::string> buildorder);
