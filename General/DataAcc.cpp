@@ -121,6 +121,14 @@ DataAcc::DataAcc(std::string unitdb, std::string config){
 
 std::string DataAcc::getAttributeString(std::string id, int attribute){
     std::string attr = data[id][attribute];
+    if(attr == "Zer")
+    {
+        attr = "Zerg";
+    }
+    if(attr == "Pro")
+    {
+        attr = "Prot";
+    }
     return attr;
 }
 
