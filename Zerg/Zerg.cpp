@@ -85,7 +85,7 @@ void Zerg::updateResources()
 //TODO: need to be done each time step for Zerg
 void Zerg::larvaSelfGeneration()
 {
-    if(larva_num + larva_producing + inject_larva_num < larva_max)
+    if(larva_num < larva_max)
     {
         Unit larva("Larva",larva_duration,1,true);
         building.push_back(larva);
