@@ -63,10 +63,12 @@ int Zerg::larva_total()
 //I think this function can be merged into the advanceOneTimeStep and this function could be put in the race class
 void Zerg::updateResources()
 {
-    int add_mineral = mineral_harvesting*worker_minerals;//here the data type need to be considered.
-    int add_vespene = vespene_harvesting*worker_vespene;
-    minerals += add_mineral;
-    vespene += add_vespene;
+    if(worker_minerals > 0){
+        minerals += worker_minerals * data->getParameter("MINERAL_HARVESTING", true);
+    }
+    if(worker_vespene > 0){
+        vespene += worker_vespene * data->getParameter("VESPENE_HARVESTING", true);
+    }
     //std::cout << minerals << std::endl;
     //std::cout << vespene << std::endl;
     larvaSelfGeneration();
@@ -108,7 +110,7 @@ void Zerg::advanceBuildingProcess(){
                 //std::cout << "injection fin" << std::endl;
                 inject_larva_num += inject_per;
                 building.remove(*it);
-                addEvent("special","injection_finished","","");
+                //addEvent("special","injection_finished","","");
             }
             else if(it->getName()=="Larva")
             {
@@ -198,7 +200,7 @@ int Zerg::startBuildingProcess()
 
     Unit newUnit = future.front();
        //std::cout << newUnit.getId() << std::endl;
-    if(data->getAttributeString(newUnit.getName(),DataAcc::race)!="Zer")
+    if(data->getAttributeString(newUnit.getName(),DataAcc::race)!="Zerg")
     {
         return -2;
     }
