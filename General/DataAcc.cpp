@@ -201,7 +201,6 @@ Unit DataAcc::getUnit(std::string name){
     int max_energy = 0;
     if(name == "Injection")
     {
-       std::cout << "ge" << std::endl;
        build_time = 290000;
        occ_limit = 1;
        start_energy = 0;
@@ -226,7 +225,6 @@ Unit DataAcc::getUnit(std::string name){
     }
 
     cur_unit_id ++;
-        std::cout << name << std::endl;
 
     return *u;
 }
