@@ -9,6 +9,7 @@ bool Zerg::larva_producing = false;
 int Zerg::count = 0;
 bool Zerg::base_occ = false;
 bool Zerg::inject = false;
+bool Zerg::base_upgrade = false;
 
 Zerg::Zerg(std::vector<std::string> buildorder){
     for(int i = 0; i < data->getParameter("BASIS_START"); i++){
@@ -121,6 +122,8 @@ void Zerg::advanceBuildingProcess(){
 
             if(Building_state == "producer_consumed_at_end")
             {
+            if((it->getName()=="Lair")||(it->getName()=="Hive"))
+            {base_upgrade = false;}
                 std::vector<std::string> prod = data->getAttributeVector(it->getName(),DataAcc::producer);
                 for(std::vector<std::string>::iterator it1 = prod.begin();it1!=prod.end();it1++)
                 {
@@ -399,6 +402,7 @@ int Zerg::startBuildingProcess()
                         supply_used--;
                     }
                     prod_ok = true;
+                    
                 }
                 //"Unit or Building"
                 //check producer here and eliminate the first producer we found.
@@ -408,7 +412,7 @@ int Zerg::startBuildingProcess()
 
             if(newUnit.getName()=="Queen")
             {
-              if(base_occ == false){
+              if((base_occ == false)&&(base_upgrade == false)){
                   base_occ = true;
                   prod_ok = true;
             }
@@ -439,7 +443,14 @@ int Zerg::startBuildingProcess()
             //std::cout << newUnit.getName() << std::endl;
             if(Building_state == "producer_consumed_at_end")
             {
-                prod_ok = true;
+               if((cur_producer=="Hatchery")||(cur_producer=="Lair"))
+                    { if(base_occ == false){
+                      prod_ok = true;
+                      base_upgrade = true;
+                    }
+                    }
+               else
+                   {prod_ok = true;}
             }
 
             if(prod_ok==true)

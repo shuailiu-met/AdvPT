@@ -12,6 +12,7 @@ private:
     static int count;
   static bool base_occ;
   static bool inject;
+  static bool base_upgrade;
     std::list<Unit> Queenlist;
     std::list<Unit> Zerglingpair;
 
