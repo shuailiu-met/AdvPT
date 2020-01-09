@@ -7,6 +7,8 @@ int Zerg::larva_num = 3;
 int Zerg::inject_larva_num = 0;
 bool Zerg::larva_producing = false;
 int Zerg::count = 0;
+bool Zerg::base_occ = false;
+bool Zerg::inject = false;
 
 Zerg::Zerg(std::vector<std::string> buildorder){
     for(int i = 0; i < data->getParameter("BASIS_START"); i++){
@@ -138,10 +140,9 @@ void Zerg::advanceBuildingProcess(){
             finishedTemp.push_back(*it);
             // add supply if building provides it
             // remove occupation
-            Unit *occ = it->getOccupy();
-            if(occ != nullptr){
-                it->setOccupy(nullptr);
-                occ->decOccupyBy();
+            if(it->getName()=="Queen")
+            {
+             base_occ = false;
             }
             }
             }
@@ -161,6 +162,7 @@ void Zerg::advanceBuildingProcess(){
         else if((it->getName()=="Injection"))
         {
             inject_larva_num +=3;
+            inject = false;
         }
         else
         {
@@ -357,6 +359,7 @@ int Zerg::startBuildingProcess()
             {
                 if(data->getAttributeString(newUnit.getName(),DataAcc::structure)=="False")
                 {
+                  if(data->getAttributeString(newUnit.getName(),DataAcc::producer)=="Larva"){
                     if(larva_num!=0)
                     {
                         /*Unit l = data->getUnit("Larva");
@@ -370,6 +373,17 @@ int Zerg::startBuildingProcess()
                     {
                         inject_larva_num --;
                         prod_ok = true;
+                    }
+                    else
+                    {return 0;}
+                  }
+                    else
+                    {
+                      cur_producer = data->getAttributeString(newUnit.getName(),DataAcc::producer);
+                      std::list<Unit>::iterator upgradeit = find_if(finished.begin(),finished.end(),[&cur_producer](const Unit &u){return (u.getName()==cur_producer);});
+                      supply_used -= data->getAttributeValue(upgradeit->getName(),DataAcc::supply_cost,false);
+                      finished.remove(*upgradeit);
+                      prod_ok = true;                   
                     }
                 }
 
@@ -392,9 +406,18 @@ int Zerg::startBuildingProcess()
             }
             //if(Building_state == "producer_consumed_at_end")//maybe better in advanced step
 
-            if(Building_state == "producer_occupied")
+            if(newUnit.getName()=="Queen")
             {
-                std::vector<std::string> occ_producer = data->getAttributeVector(newUnit.getName(),DataAcc::producer);
+              if(base_occ == false){
+                  base_occ = true;
+                  prod_ok = true;
+            }
+             else
+              {
+               return 0;
+                }
+            }
+                /*std::vector<std::string> occ_producer = data->getAttributeVector(newUnit.getName(),DataAcc::producer);
                 for(std::vector<std::string>::iterator it9 = occ_producer.begin();it9!=occ_producer.end();it9++)
                 {
                     for(std::list<Unit>::iterator it8 = finished.begin();it8!=finished.end();it8++)
@@ -410,10 +433,9 @@ int Zerg::startBuildingProcess()
                             }
                         }
                     }
-                /*std::list<Unit>::iterator it8 = find_if(finished.begin(),finished.end(),[&cur_producer](const Unit &u){return (u.getName()==cur_producer);});*/
-                }
+                }*/
                 //check occupy here
-            }
+            
             //std::cout << newUnit.getName() << std::endl;
             if(Building_state == "producer_consumed_at_end")
             {
@@ -447,7 +469,7 @@ int Zerg::specialAbility()
     {
         std::string id = it->getName() + "_" + std::to_string(it->getId());
         std::string targetbuilding = "";
-        if((it->currentEnergy() >= data->getParameter("INJECTLARVAE_ENERGY_COST",true))&&(inject_larva_num < 19))
+        if((it->currentEnergy() >= data->getParameter("INJECTLARVAE_ENERGY_COST",true))&&(inject_larva_num < 19)&&(inject == false))
         {
             Unit in = data->getUnit("Injection");
             building.push_back(in);
@@ -468,6 +490,7 @@ int Zerg::specialAbility()
                 }
             }
             addEvent("special","injectlarvae",targetbuilding,id);
+            inject = true;
             return 1;
 
         }
