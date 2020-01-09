@@ -40,7 +40,7 @@ Zerg::Zerg(std::vector<std::string> buildorder){
 //I think this function can be merged into the advanceOneTimeStep and this function could be put in the race class
 void Zerg::updateResources()
 {
-   // std::cout << inject_larva_num << std::endl;
+    std::vector<Unit> LarvaeTemp;
     /*std::cout << larva_num << std::endl;
     std::cout << larva_producing << std::endl << std::endl;
 
@@ -48,7 +48,6 @@ void Zerg::updateResources()
         {
             std::cout << it->getName() << " " << std::endl;
         }*/
-    //count ++;
     //std::cout << larva_num << std::endl;
     if(worker_minerals > 0){
         minerals += worker_minerals * data->getParameter("MINERAL_HARVESTING", true);
@@ -70,7 +69,7 @@ void Zerg::updateResources()
     {
             Unit l = data->getUnit("Larva");
             building.push_back(l);
-
+            LarvaeTemp.push_back(l);
             //std::cout << l.unitornot() << std::endl;
             larva_producing=true;
             //larva_producing++;
@@ -91,11 +90,16 @@ void Zerg::updateResources()
 void Zerg::advanceBuildingProcess(){
     //TODO, Event ids
     std::vector<Unit> finishedTemp;
-    std::vector<Unit> LarvaeTemp;
+    //std::vector<Unit> LarvaeTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
             it->updateTime(1 * FIXEDPOINT_FACTOR);
     // don't remove element while iterating over list
         if(it->isFinished()){
+            if(it->getName()=="Injection")
+            {
+                finishedTemp.push_back(*it);
+            }
+            else{
              /*if(it->getName()=="injection")
             {
                 //std::string id = it->getName() + "_" + std::to_string(it->getId());
@@ -141,6 +145,7 @@ void Zerg::advanceBuildingProcess(){
             }
             }
             }
+            }
         }
 
 
@@ -153,7 +158,7 @@ void Zerg::advanceBuildingProcess(){
             larva_num++;
             larva_producing = false;
         }
-        else if((it->getName()=="a"))
+        else if((it->getName()=="Injection"))
         {
             inject_larva_num +=3;
         }
@@ -444,8 +449,8 @@ int Zerg::specialAbility()
         if((it->currentEnergy() >= data->getParameter("INJECTLARVAE_ENERGY_COST",true))&&(inject_larva_num < 19))
         {
             std::cout << "here" << std::endl;
-            //Unit in = data->getUnit("Injection");
-            //building.push_back(in);
+            Unit in = data->getUnit("Injection");
+            building.push_back(in);
            //larva_producing++;
 //injection = new Unit("injection",data->getParameter("INJECTLARVAE_DURATION",true),1,true,0,0,0);
             //std::cout << in.getName() << std::endl;
