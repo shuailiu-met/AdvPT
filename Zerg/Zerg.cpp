@@ -446,9 +446,9 @@ int Zerg::specialAbility()
    for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
     {
         std::string id = it->getName() + "_" + std::to_string(it->getId());
+        std::string targetbuilding = "";
         if((it->currentEnergy() >= data->getParameter("INJECTLARVAE_ENERGY_COST",true))&&(inject_larva_num < 19))
         {
-            std::cout << "here" << std::endl;
             Unit in = data->getUnit("Injection");
             building.push_back(in);
            //larva_producing++;
@@ -456,9 +456,18 @@ int Zerg::specialAbility()
             //std::cout << in.getName() << std::endl;
             //building.push_back(*injection);
             it->setEnergy(-data->getParameter("INJECTLARVAE_ENERGY_COST",true));
-            /*std::string hat = "Hatchery"
-            auto target = find_if(finished.begin(),finished.end(),[])*/
-            addEvent("special","injection_begin","",id);
+            std::vector<std::string> target = data->getAttributeVector("Queen",DataAcc::producer);
+            for(std::vector<std::string>::iterator proit = target.begin();proit!=target.end();proit++)
+            {
+                std::string targetnow = *proit;
+                std::list<Unit>::iterator searcher = find_if(finished.begin(),finished.end(),[&targetnow](const Unit &u){return(u.getName()==targetnow);});
+                if(searcher!=finished.end())
+                {
+                    targetbuilding = searcher->getName() + "_" + std::to_string(searcher->getId());
+                    break;
+                }
+            }
+            addEvent("special","injection_begin",targetbuilding,id);
             return 1;
 
         }
