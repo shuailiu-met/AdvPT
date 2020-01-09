@@ -84,6 +84,7 @@ int DataAcc::parseConfigLine(std::string line){
 
 DataAcc::DataAcc(std::string unitdb, std::string config){
     cur_unit_id = 0;
+    special_id = 0;
 
     std::fstream fs;
 
@@ -181,14 +182,9 @@ int DataAcc::getParameter(std::string id, bool fp){
 Unit DataAcc::getUnit(std::string name){
 
     bool unit = false;
-    if((name == "Larva")){
+    if((name == "Larva")||(name == "Injection")){
         unit = false;
-    }
-    /*else if(name == "Injection")
-    {
-        unit = false;
-    }*/
-    else if(this->getAttributeString(name, DataAcc::structure) == "True"){
+    }else if(this->getAttributeString(name, DataAcc::structure) == "True"){
         unit = false;
     }else if(this->getAttributeString(name, DataAcc::structure) == "False"){
         unit = true;
@@ -196,11 +192,29 @@ Unit DataAcc::getUnit(std::string name){
         assert(false);
     }
 
+
     Unit *u;
-    int build_time = this->getAttributeValue(name, this->build_time, true);
-    int occ_limit = this->getAttributeValue(name, this->occupy_limit);
-    int start_energy = this->getAttributeValue(name, this->start_energy, true);
-    int max_energy = this->getAttributeValue(name, this->max_energy, true);
+
+    int build_time = 0;
+    int occ_limit = 0;
+    int start_energy = 0;
+    int max_energy = 0;
+    if(name == "Injection")
+    {
+       std::cout << "ge" << std::endl;
+       build_time = 290000;
+       occ_limit = 1;
+       start_energy = 0;
+       max_energy = 0;
+       u = new Unit(name, build_time, occ_limit, unit, start_energy, max_energy, special_id);
+       special_id++;
+    }
+    else
+    {
+    build_time = this->getAttributeValue(name, this->build_time, true);
+    occ_limit = this->getAttributeValue(name, this->occupy_limit);
+    start_energy = this->getAttributeValue(name, this->start_energy, true);
+    max_energy = this->getAttributeValue(name, this->max_energy, true);
     if(name == "Larva")
     {
         build_time = 110000;
@@ -209,8 +223,10 @@ Unit DataAcc::getUnit(std::string name){
         max_energy = 0;
     }
     u = new Unit(name, build_time, occ_limit, unit, start_energy, max_energy, cur_unit_id);
+    }
 
     cur_unit_id ++;
+        std::cout << name << std::endl;
 
     return *u;
 }

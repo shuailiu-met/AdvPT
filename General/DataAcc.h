@@ -33,6 +33,7 @@ private:
 
     // incrementing unit id
     int cur_unit_id;
+    int special_id;
 public:
 
     // enum for easy access to attributes
