@@ -467,7 +467,7 @@ int Zerg::specialAbility()
                     break;
                 }
             }
-            addEvent("special","injection_begin",targetbuilding,id);
+            addEvent("special","injectlarvae",targetbuilding,id);
             return 1;
 
         }
