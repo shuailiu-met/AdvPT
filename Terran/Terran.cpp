@@ -71,24 +71,49 @@ void Terran::advanceBuildingProcess(){
             // don't remove element while iterating over list
             if(it->isFinished()){
                 finishedTemp.push_back(*it);
+//                Unit newUnit =finishedTemp.front();
                 // add supply if building provides it
-                if (it->getName() == "OrbitalCommand") {
-                    std::list<Unit>::iterator it1 = finished.begin();
-                        finished.remove(*it1);
-                }
+//                if (it->getName() == "OrbitalCommand") {
+//                    std::list<Unit>::iterator it1 = finished.begin();
+//                        finished.remove(*it1);
+//                }
 //                std::cout<< it->getName()<<std::endl;//cout the finised thing
-
+                //if building contain supply
                 if (it->getName() != "OrbitalCommand") {
                     if (it->getName() != "PlanetaryFortress") {
                 supply += data->getAttributeValue(it->getName(), DataAcc::supply_provided, false);
                 }
                 }
+                
                 // remove occupation
                 Unit *occ = it->getOccupy();
                 if(occ != nullptr){
                     it->setOccupy(nullptr);
                     occ->decOccupyBy();
                 }
+                
+                //upgrade building
+                if(data->getAttributeString(it->getName(), DataAcc::production_state) == "producer_consumed_at_end" ){
+                    std::string prod = data->getAttributeString(it->getName(), DataAcc::producer);
+                    for(std::list<Unit>::iterator it1 = finished.begin(); it1 !=finished.end(); it1++){
+                        if (it1->getName() == prod) {
+                            finished.remove(*it1);
+                            break;
+                        }
+                        
+                    }
+                }
+//                if (it->getName() == "OrbitalCommand") {
+//                    std::list<Unit>::iterator it1 = finished.begin();
+//                        finished.remove(*it1);
+//                }
+//                for (std::list<Unit>::iterator it1 = finished.begin(); it1 != finished.end(); it1++) {
+//                    if (it1->getName() == "OrbitalCommand")
+//                     finished.remove(*it);
+//                    if (it->getName() == "PlanetaryFortress")
+//                        finished.remove(*it);
+//
+//                }
             }
         }
 
@@ -203,9 +228,7 @@ int  Terran::startBuildingProcess(){
        // -> general case: multiple producers possible
        bool prodOK = false;
        bool prodExists = false;
-       bool prodConsumed = false;
        std::string prodName = "";
-//       std::string prod = data->getAttributeString(newUnit.getName(), DataAcc::producer);
        std::vector<std::string> prod = data->getAttributeVector(newUnit.getName(), DataAcc::producer);
        for (std::vector<std::string>::iterator vec_prod = prod.begin(); vec_prod != prod.end();
             vec_prod++) {
@@ -213,31 +236,32 @@ int  Terran::startBuildingProcess(){
              if( *vec_prod == it->getName()){
                prodExists = true;
                std::string s = std::to_string(it->getId());
+                 if (!it->isOccupied()) {
                prodName = it->getName() + "_" + s;
+                 }
                newUnit.setBuildBy(prodName);
                // check if producer is occupied
                // TODO does 'producer_occupied' flag indicate that this building is
                // occupied when producing or that the production building of this building is occupied
-               if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_consumed_at_end"){
+//               if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_consumed_at_end" ){
                 if(!it->isOccupied()){
                    it->incOccupiedBy();
                    newUnit.setOccupy(&(*it));
                    prodOK = true;
-                   prodConsumed = true;
                    break;
+                  }
+//               }else if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_occupied"){
+//                   // we need to register the producer and check for free capacity
+//                   if(!it->isOccupied()){
+//                       it->incOccupiedBy();
+//                       newUnit.setOccupy(&(*it));
+//                       prodOK = true;
+//                       break;
+//                   }
+//               }
+//                 else{assert(false);}
                }
-               }else if(data->getAttributeString(newUnit.getName(), DataAcc::production_state) == "producer_occupied"){
-                   // we need to register the producer and check for free capacity
-                   if(!it->isOccupied()){
-                       it->incOccupiedBy();
-                       newUnit.setOccupy(&(*it));
-                       prodOK = true;
-                       break;
-                   }
-               }
-           }
-             
-       }
+        }
        }
 
        // if no producer in finished queue, search in building queue
@@ -268,14 +292,6 @@ int  Terran::startBuildingProcess(){
                    occupyingworker++;
                }
             }
-           if (prodConsumed) {
-               std::string basisproducer = data->getAttributeString(newUnit.getName(), DataAcc::producer);
-//               for (std::list<Unit>::iterator it = finished.begin(); it != finished.end(); it++) {
-//                   if (it->getName() == prod[0])
-//                    finished.remove(*it);
-//                   break;
-//               }
-           }
            future.remove(newUnit);
 
            // manage materials
