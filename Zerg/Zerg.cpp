@@ -1,144 +1,510 @@
 #include "Zerg.h"
 #include <iostream>
 #include <string>
+#include <algorithm>
 
-Zerg::Zerg(std::vector<std::string> buildorder) : Race{buildorder}{
+int Zerg::larva_num = 3;
+int Zerg::inject_larva_num = 0;
+bool Zerg::larva_producing = false;
+int Zerg::count = 0;
+bool Zerg::base_occ = false;
+bool Zerg::inject = false;
+bool Zerg::base_upgrade = false;
 
-    // set race specific attributes
-    larva_num = data->getParameter("LARVA_START",false);
-    larva_max = data->getParameter("MAX_LARVA_PER_BUILDING".false);
-    larva_duration = data->getParameter("LARVA_DURATION",true);
-    inject_larva_num = 0;
-    inject_per = data->getParameter("INJECTLARVAE_AMOUNT",false);
-    inject_max = data->getParameter("MAX_INJECTLARVAE_PER_BUILDING",false);
-    inject_duration = data->getParameter("INJECTLARVAE_DURATION",true);
-    larva_producing = 0;
-    inject_cost = data->getParameter("INJECTLARVAE_ENERGY_COST",true)
-    // build the starting unit
-    //here don't use the getUnit() because here the building time should be set to 0
-    Units u("Hatchery",0,1,false);
-    finished.push_back(u);
-    Units o("Overload",0,1,true);
-    finished.push_back(o);
-    Units worker[12]("Drone",0,1,true);
-    for(int i = 0;i<12;i++)
-    {
-        finished.push_back(worker[i]);
+Zerg::Zerg(std::vector<std::string> buildorder){
+    for(int i = 0; i < data->getParameter("BASIS_START"); i++){
+        Unit u = data->getUnit("Hatchery");
+        finished.push_back(u);
+        supply = data->getAttributeValue(u.getName(),DataAcc::supply_provided,false);
     }
+    for(int i = 0; i < data->getParameter("WORKERS_START"); i++){
+        finished.push_back(data->getUnit("Drone"));
+        workers++;
+        supply_used +=data->getAttributeValue("Drone", DataAcc::supply_cost, false);
+    }
+    finished.push_back(data->getUnit("Overlord"));
+    supply += data->getAttributeValue("Overlord",DataAcc::supply_provided,false);
+
+    for(std::vector<std::string>::iterator it = buildorder.begin(); it != buildorder.end(); it++) {
+        Unit u = data->getUnit(*it);
+        if(u.getName() == "Zergling")
+        {
+            Unit p = data->getUnit("Zergling");
+            Zerglingpair.push_back(p);
+        }
+        future.push_back(u);
+    }
+    worker_minerals = workers;
+   // std::cout << data->getAttributeString("Injection",DataAcc::race);
+
 }
 
-int Zerg::larva_total()
-{
-    return larva_num+inject_num;
-}
-
-//get the num of worker on gas,then distribute worker
-void Zerg::distributeWorkers()
-{
-    std::string target = "Extractor";
-    auto it = finished.begin();
-    int i = 0;
-    while(it!=finished.end())
-    {
-    it = find_if(it,finished.end(),[&target](const Unit &u){return (u.getName() == target);});
-    if(it!=finished.end())
-    {
-        i++;
-        it++;
-    }
-    }
-    worker_vespene = i*3;
-    worker_minerals = workers - worker_vespene;
-}
 
 //I think this function can be merged into the advanceOneTimeStep and this function could be put in the race class
 void Zerg::updateResources()
 {
-    mineral_harvesting = data->getParameter("MINERAL_HARVESTING", true);
-    vespene_harvesting = data->getParameter("VESPENE_HARVESTING", true);
-    int add_mineral = mineral_harvesting*worker_mineral;//here the data type need to be considered.
-    int add_vespene = vespene_harvesting*worker_vespene;
-    minerals += add_mineral;
-    vespene += add_vespene;
-}
+    std::vector<Unit> LarvaeTemp;
+    /*std::cout << larva_num << std::endl;
+    std::cout << larva_producing << std::endl << std::endl;
 
-void Zerg::larvaSelfGeneration()
-{
-    if(larva_num + larva_producing + inject_larva_num < larva_max)
+        for(auto it = building.begin();it!=building.end();it++)
+        {
+            std::cout << it->getName() << " " << std::endl;
+        }*/
+    //std::cout << larva_num << std::endl;
+    if(worker_minerals > 0){
+        minerals += worker_minerals * data->getParameter("MINERAL_HARVESTING", true);
+    }
+    if(worker_vespene > 0){
+        vespene += worker_vespene * data->getParameter("VESPENE_HARVESTING", true);
+    }
+    //larvaSelfGeneration();
+    int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
+    for (std::list<Unit>::iterator it = Queenlist.begin();it!=Queenlist.end();it++)
     {
-        Unit larva("Larva",larva_duration,1,true);
-        building.push_back(larva);
-        larva_producing++;
+    if(it->currentEnergy() + energy_regen <= it->maxEnergy())
+    {
+        it->setEnergy(energy_regen);
+    }
+    }
+
+    if((larva_num < 3)&&(larva_producing == false))
+    {
+            Unit l = data->getUnit("Larva");
+            building.push_back(l);
+            LarvaeTemp.push_back(l);
+            //std::cout << l.unitornot() << std::endl;
+            larva_producing=true;
+            //larva_producing++;
     }
 }
 
+/*void Zerg::larvaSelfGeneration()
+{
+    if(larva_num < data->getParameter("MAX_LARVA_PER_BUILDING",false))
+    {
+        Unit larva("Larva",data->getParameter("LARVA_DURATION",true),1,true);
+        building.push_back(larva);
+        larva_producing++;
+    }
+}*/
+
+
 void Zerg::advanceBuildingProcess(){
-    // walk over all buildings and update build time
+    //TODO, Event ids
     std::vector<Unit> finishedTemp;
+    //std::vector<Unit> LarvaeTemp;
     for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
             it->updateTime(1 * FIXEDPOINT_FACTOR);
     // don't remove element while iterating over list
         if(it->isFinished()){
-            if(it->getName()=="Larva")
+            if(it->getName()=="Injection")
             {
-                larva_num++;
-                larva_producing--;
-                building.remove(*it);
-            }
-            else if(it->getName()=="injection")
-            {
-                inject_larva_num += inject_per;
-                building.remove(*it);
+                finishedTemp.push_back(*it);
             }
             else{
-            if(it->getName()=="Queen")
+             /*if(it->getName()=="injection")
             {
-                Queenlist.push_back(*it);
+                //std::string id = it->getName() + "_" + std::to_string(it->getId());
+                inject_larva_num += data->getParameter("INJECTLARVAE_AMOUNT",false);
+                building.remove(*it);
+            }*/
+            /*else if(it->getName()=="Larva")
+            {
+                building.remove(*it);
+                LarvaeTemp.push_back(*it);
+                larva_num++;
+                larva_producing--;
+                addEvent("build-end", it->getName(), it->getName(), "", 0);
+            }*/
+
+            std::string Building_state = data->getAttributeString(it->getName(),DataAcc::production_state);
+
+            if(Building_state == "producer_consumed_at_end")
+            {
+            if((it->getName()=="Lair")||(it->getName()=="Hive"))
+            {base_upgrade = false;}
+                std::vector<std::string> prod = data->getAttributeVector(it->getName(),DataAcc::producer);
+                for(std::vector<std::string>::iterator it1 = prod.begin();it1!=prod.end();it1++)
+                {
+                    for(std::list<Unit>::iterator it2 = finished.begin();it2!=finished.end();it2++)
+                    {
+                    if(it2->getName()==*it1)
+                    {
+                        finished.remove(*it2);
+                        finishedTemp.push_back(*it);
+                        break;
+                    }
+                    }
+                }
             }
+            else
+            {
             finishedTemp.push_back(*it);
             // add supply if building provides it
-            supply += data->getAttributeValue(it->getName(), DataAcc::supply_provided, false);
             // remove occupation
-            Unit *occ = it->getOccupy();
-            if(occ != nullptr){
-                it->setOccupy(nullptr);
-                occ->decOccupyBy();
+            if(it->getName()=="Queen")
+            {
+             base_occ = false;
+            }
+            }
             }
             }
         }
-    }
+
 
     // if finished elements -> move
+
     for(std::vector<Unit>::iterator it = finishedTemp.begin(); it != finishedTemp.end(); it++) {
         building.remove(*it);
+        if(it->getName()=="Larva")
+        {
+            larva_num++;
+            larva_producing = false;
+        }
+        else if((it->getName()=="Injection"))
+        {
+            inject_larva_num +=3;
+            inject = false;
+        }
+        else
+        {
         finished.push_back(*it);
-        std::vector<int> i = {it->getId()};
-        addEvent("build-end", it->getName(), it->getBuildBy(), "", &i);
+        if(it->getName() == "Drone")
+            workers++;
+        if(it->getName() == "Extractor")
+            vespene_buildings ++;
+        if(it->getName() == "Hatchery")
+            supply += 6;
+        if(it->getName() == "Overlord")
+            supply += 8;
+        if(it->getName() == "Queen")
+        {
+            Queenlist.push_back(*it);
+        }
+        if(it->getName() == "Zergling")
+        {
+            addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
+            std::list<Unit>::iterator pairit = Zerglingpair.begin();
+            finished.push_back(*pairit);
+            addEvent("build-end", pairit->getName(), it->getBuildBy(), "", pairit->getId());
+            Zerglingpair.remove(*pairit);
+        }
+        else
+        {
+         addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
+        }
+        }
     }
 }
 
 //TODO: consider consumption at end/start/ occupy
 int Zerg::startBuildingProcess()
 {
+    if(future.size()==0)
+    {
+        return 0;
+    }
 
+    Unit newUnit = future.front();
+    if(data->getAttributeString(newUnit.getName(),DataAcc::race)!="Zerg")
+    {
+        return -2;
+    }
+
+    //check resource
+        int scost = data->getAttributeValue(newUnit.getName(),DataAcc::supply_cost,false);
+        int vcost = data->getAttributeValue(newUnit.getName(),DataAcc::vespene,true);
+        int mcost = data->getAttributeValue(newUnit.getName(),DataAcc::minerals,true);
+        if(newUnit.getName()=="Zergling")
+        {
+            scost = 1;
+        }
+        if((supply-supply_used-scost<0)||(vcost>vespene)||(mcost>minerals))
+        {
+            if((vcost>vespene)&&(building.size()==0)&&(vespene_buildings==0))
+            {
+                return -2;
+            }
+
+            if((supply-supply_used-scost<0)&&(building.size()==0))
+            {
+                return -2;
+            }
+            return 0;
+        }
+
+        //check deps
+            std::vector<std::string> deps = data->getAttributeVector(newUnit.getName(),DataAcc::dependencies);
+            bool found = false;
+            if(deps.size()!=0)
+            {
+            for (std::vector<std::string>::iterator finddeps = deps.begin();finddeps!=deps.end();finddeps++)
+            {
+            /*std::string target = *finddeps;
+            auto it = find_if(finished.begin(),finished.end(),[&target](const Unit &u){return (u.getName() == target);});
+            if(it!=finished.end())
+            {
+                found = true;
+                break;
+            }*/
+            for(std::list<Unit>::iterator it =finished.begin();it!=finished.end();it++)
+            {
+                if(it->getName()==*finddeps)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            }
+            // find if it's building
+
+            if(found == false)
+            {
+                bool future = false;
+                for (std::vector<std::string>::iterator findfuture = deps.begin();findfuture!=deps.end();findfuture++){
+                /*std::string target = *findfuture;
+                auto it2 = find_if(building.begin(),building.end(),[&target](const Unit &u){return (u.getName()==target);});
+                if(it2!=building.end())
+                {
+                    future = true;
+                    return 0;
+                }*/
+                for(std::list<Unit>::iterator it = building.begin();it!=building.end();it++)
+                {
+                    if(it->getName()==*findfuture)
+                    {
+                        future = true;
+                        return 0;
+                        break;
+                    }
+                }
+                }
+
+                if(future == false)
+                {
+                    return -2;
+                }
+            }
+            }
+            //no deps
+            else
+            {
+                found = true;
+            }
+
+
+            bool prod_exist = false;
+            bool prod_ok = false;
+            std::string cur_producer = "";
+            std::string prodName = "";
+            std::vector<std::string> prod = data->getAttributeVector(newUnit.getName(),DataAcc::producer);
+            std::vector<std::string>::iterator findlarva = prod.begin();
+            if((*findlarva == "Larva")&&(larva_num+inject_larva_num!=0))
+            {
+                prod_exist = true;
+                cur_producer = "Larva";
+                prodName = "Larva";
+                newUnit.setBuildBy(prodName);
+            }
+            else if((*findlarva == "Larva")&&(larva_num+inject_larva_num==0))
+            {
+                return 0;
+            }
+            else
+            {
+            for(std::vector<std::string>::iterator it3 = prod.begin();it3!=prod.end();it3++)
+            {
+                /*std::string target = *it3;
+                auto it4 = find_if(finished.begin(),finished.end(),[&target](const Unit &u){return (u.getName()==target);});*/
+                for(std::list<Unit>::iterator it4 = finished.begin();it4!=finished.end();it4++)
+                {
+                if(it4->getName()==*it3)
+                {
+                    prod_exist = true;
+                    std::string s = std::to_string(it4->getId());
+                    prodName = it4->getName() + "_" + s;
+                    newUnit.setBuildBy(prodName);
+                    //prod_exist = true;
+                    cur_producer = it4->getName();
+                   // prodName = it4->getName() + "_" + cur_producer;
+                    //newUnit.setBuildBy(prodName);
+                    break;
+                }
+                }
+            }
+            }
+
+            //check if producer is in building progress
+            if (prod_exist==false)
+            {
+                for (std::vector<std::string>::iterator it5 = prod.begin();it5!=prod.end();it5++)
+                {
+                    /*std::string target = *it5;
+                    auto it6 = find_if(building.begin(),building.end(),[&target](const Unit &u){return (u.getName()==target);});*/
+                    for(std::list<Unit>::iterator it6 = building.begin();it6!=building.end();it6++)
+                    {
+                    if(it6->getName()==*it5)
+                    {
+                        return 0;
+                        break;
+                    }
+                    }
+                }
+                return -2;
+            }
+
+            //consider sacrifice and occupy
+            if(prod_exist==true)
+            {
+            std::string Building_state = data->getAttributeString(newUnit.getName(),DataAcc::production_state);
+            if(Building_state == "producer_consumed_at_start")
+            {
+                if(data->getAttributeString(newUnit.getName(),DataAcc::structure)=="False")
+                {
+                  if(data->getAttributeString(newUnit.getName(),DataAcc::producer)=="Larva"){
+                    if(larva_num!=0)
+                    {
+                        /*Unit l = data->getUnit("Larva");
+                        building.push_back(l);
+                        //std::cout << "larva" << std::endl;
+                        larva_producing++;*/
+                        larva_num --;
+                        prod_ok = true;
+                    }
+                    else if(inject_larva_num!=0)
+                    {
+                        inject_larva_num --;
+                        prod_ok = true;
+                    }
+                    else
+                    {return 0;}
+                  }
+                    else
+                    {
+                      cur_producer = data->getAttributeString(newUnit.getName(),DataAcc::producer);
+                      std::list<Unit>::iterator upgradeit = find_if(finished.begin(),finished.end(),[&cur_producer](const Unit &u){return (u.getName()==cur_producer);});
+                      supply_used -= data->getAttributeValue(upgradeit->getName(),DataAcc::supply_cost,false);
+                      finished.remove(*upgradeit);
+                      prod_ok = true;                   
+                    }
+                }
+
+                if(data->getAttributeString(newUnit.getName(),DataAcc::structure)=="True")
+                {
+                    cur_producer = data->getAttributeString(newUnit.getName(),DataAcc::producer);
+                    std::list<Unit>::iterator it7 = find_if(finished.begin(),finished.end(),[&cur_producer](const Unit &u){return (u.getName()==cur_producer);});
+                    finished.remove(*it7);
+                    if(cur_producer=="Drone")
+                    {
+                        worker_minerals--;
+                        workers = worker_minerals+worker_vespene;
+                        supply_used--;
+                    }
+                    prod_ok = true;
+                    
+                }
+                //"Unit or Building"
+                //check producer here and eliminate the first producer we found.
+                //worker number,worker on minerals, supply
+            }
+            //if(Building_state == "producer_consumed_at_end")//maybe better in advanced step
+
+            if(newUnit.getName()=="Queen")
+            {
+              if((base_occ == false)&&(base_upgrade == false)){
+                  base_occ = true;
+                  prod_ok = true;
+            }
+             else
+              {
+               return 0;
+                }
+            }
+                /*std::vector<std::string> occ_producer = data->getAttributeVector(newUnit.getName(),DataAcc::producer);
+                for(std::vector<std::string>::iterator it9 = occ_producer.begin();it9!=occ_producer.end();it9++)
+                {
+                    for(std::list<Unit>::iterator it8 = finished.begin();it8!=finished.end();it8++)
+                    {
+                        if(it8->getName()==*it9)
+                        {
+                            if(it8->isOccupied()!=1)
+                            {
+                                it8->incOccupiedBy();
+                                newUnit.setOccupy(&(*it8));
+                                prod_ok = true;
+                                break;
+                            }
+                        }
+                    }
+                }*/
+                //check occupy here
+            
+            //std::cout << newUnit.getName() << std::endl;
+            if(Building_state == "producer_consumed_at_end")
+            {
+               if((cur_producer=="Hatchery")||(cur_producer=="Lair"))
+                    { if(base_occ == false){
+                      prod_ok = true;
+                      base_upgrade = true;
+                    }
+                    }
+               else
+                   {prod_ok = true;}
+            }
+
+            if(prod_ok==true)
+            {
+                //std::cout << newUnit.getName() <<std::endl;
+                addEvent("build-start", newUnit.getName(), prodName);
+                building.push_back(newUnit);
+                //std::cout << newUnit.getName() << std::endl;
+                future.remove(newUnit);
+                minerals -= mcost;
+                vespene -= vcost;
+                supply_used += scost;
+                return 1;
+            }
+            }
+
+            return 0;
+    //check deps,producer,producer elimination,double produced
 }
 
 //Reminder:this should be checked every time step,injection
-void Zerg::specialAbility()
+int Zerg::specialAbility()
 {
-    int energy_regen = data->getParameter("ENERGY_REGEN_RATE", true);
-    for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
+    //TODO ,return 1,0 is now only considering 1 queen.
+    //TODO , event target ids
+   for(std::list<Unit>::iterator it = Queenlist.begin(); it != Queenlist.end(); it++)
     {
-        if((it->currentEnergy() >= inject_cost)&&(inject_larva_num < inject_max))
+        std::string id = it->getName() + "_" + std::to_string(it->getId());
+        std::string targetbuilding = "";
+        if((it->currentEnergy() >= data->getParameter("INJECTLARVAE_ENERGY_COST",true))&&(inject_larva_num < 19)&&(inject == false))
         {
-            Unit in("injection",inject_duration,1,true);
+            Unit in = data->getUnit("Injection");
             building.push_back(in);
-            setEnergy(-energy_regen);
-        }
+           //larva_producing++;
+//injection = new Unit("injection",data->getParameter("INJECTLARVAE_DURATION",true),1,true,0,0,0);
+            //std::cout << in.getName() << std::endl;
+            //building.push_back(*injection);
+            it->setEnergy(-data->getParameter("INJECTLARVAE_ENERGY_COST",true));
+            std::vector<std::string> target = data->getAttributeVector("Queen",DataAcc::producer);
+            for(std::vector<std::string>::iterator proit = target.begin();proit!=target.end();proit++)
+            {
+                std::string targetnow = *proit;
+                std::list<Unit>::iterator searcher = find_if(finished.begin(),finished.end(),[&targetnow](const Unit &u){return(u.getName()==targetnow);});
+                if(searcher!=finished.end())
+                {
+                    targetbuilding = searcher->getName() + "_" + std::to_string(searcher->getId());
+                    break;
+                }
+            }
+            addEvent("special","injectlarvae",targetbuilding,id);
+            inject = true;
+            return 1;
 
-        if(it->currentEnergy() + energy_regen <= it->maxEnergy())
-        {
-            setEnergy(energy_regen);
         }
     }
+    return 0;
 }

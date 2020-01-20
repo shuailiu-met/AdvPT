@@ -38,6 +38,7 @@ private:
     // recursively adds all dependencies for the given unit
     void recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep);
 
+    int special_id;
 public:
 
     // enum for easy access to attributes

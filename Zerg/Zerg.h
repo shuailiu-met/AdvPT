@@ -1,33 +1,30 @@
-#ifndef ZERG_H_INCLUDED
-#define ZERG_H_INCLUDED
+#ifndef ZERG_H
+#define ZERG_H
 
-#include "Race.h"
+#include "../Race.h"
 #include <iostream>
 
-Class Zerg: public Race{
-protected:
-    int larva_num;
-    int larva_max;
-    int larva_duration;
-    int inject_larva_num;
-    int inject_max;
-    int inject_per;
-    int inject_duration;
-    int energy;
-    int inject;
-    int larva_producing;
-    int inject_cost;
+class Zerg: public Race{
+private:
+    static int larva_num;
+    static int inject_larva_num;
+    static bool larva_producing;
+    static int count;
+  static bool base_occ;
+  static bool inject;
+  static bool base_upgrade;
     std::list<Unit> Queenlist;
+    std::list<Unit> Zerglingpair;
+
+//  Unit *injection;
 
 public:
-    Zerg(std::vector<std::string> buildorder) : Race{buildorder}{}
-    int larva_total();
-    void distributeWorkers();
+    Zerg(std::vector<std::string> buildorder);
     void updateResources();
     void advanceBuildingProcess();
-    void specialAbility();//for Queen
+    int specialAbility();
     int startBuildingProcess();
     void larvaSelfGeneration();
-}
+};
 
-#endif // ZERG_H_INCLUDED
+#endif
