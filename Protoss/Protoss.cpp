@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-Protoss::Protoss(std::vector<std::string> buildorder){
+Protoss::Protoss(DataAcc *dat, std::vector<std::string> buildorder, bool sim) : Race(dat, sim){
     // set race specific attributes
     supply = data->getAttributeValue("Nexus", DataAcc::supply_provided, false);
 

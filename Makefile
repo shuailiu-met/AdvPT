@@ -6,7 +6,10 @@ RACES = Race.h Protoss/Protoss.h
 
 .PHONY: all clean
 
-all: simulate
+all: simulate optimize
+
+optimize: optimize.o Race.o General/DataAcc.o Protoss/Protoss.o
+	$(CC) $(FLAGS) -o $@ $^
 
 simulate: simulate.o Race.o General/DataAcc.o Protoss/Protoss.o
 	$(CC) $(FLAGS) -o $@ $^
@@ -23,8 +26,11 @@ DataAcc.o: General/DataAcc.cpp General/DataAcc.h General/Unit.h
 simulate.o: simulate.cpp General/DataAcc.h $(RACES)
 	$(CC) $(FLAGS) -o $@ -c $<
 
+optimize.o: optimize.cpp General/DataAcc.h $(RACES)
+	$(CC) $(FLAGS) -o $@ -c $<
+
 %.o: %.cpp $(HEADER)
 	$(CC) $(FLAGS) -o $@ -c $<
 
 clean:
-	rm -f *.o General/*.o simulate Protoss/*.o
+	rm -f *.o General/*.o simulate optimize Protoss/*.o

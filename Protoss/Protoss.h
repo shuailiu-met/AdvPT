@@ -9,7 +9,7 @@ private:
     std::list<Unit> hasEnergy;
     std::unordered_map<std::string, int> chronoboost;
 public:
-    Protoss(std::vector<std::string> buildorder);
+    Protoss(DataAcc *dat, std::vector<std::string> buildorder, bool simulate = true);
 
     void updateResources();
     void advanceBuildingProcess();

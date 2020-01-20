@@ -57,5 +57,17 @@ int main(){
     cout << "Chronoboost speedup: " << val << endl;
     val = data.getParameter("MAX_LARVA_PER_BUILDING");
     cout << "Max larva per building: " << val << endl;
+
+    for(int a = 0; a < 20; a++){
+        vector<string> test = data.getRandomBuildorder("protoss", "Disruptor");
+
+        for(vector<string>::iterator it = test.begin(); it != test.end(); ++it) {
+            cout<<*it<<" ";
+            if(data.getAttributeString(*it, DataAcc::race) != "Prot")
+                cout << "\n\n\n" << "\t\t---------   ERROR   ----------"<<"\n\n\n";
+        }
+        cout << "\n";
+    }
+
     return 0;
 }

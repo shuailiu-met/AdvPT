@@ -1,9 +1,9 @@
 #include "Race.h"
 #include <iostream>
 
-Race::Race(){
+Race::Race(DataAcc *dat, bool sim){
     // create DataAcc object
-    data = new DataAcc("res/unit_db.csv", "res/parameters.csv");
+    data = dat;
 
     // set simulation time to zero
     currentTime = 0;
@@ -20,6 +20,13 @@ Race::Race(){
     supply = 0;
     supply_used = 0;
     vespene_buildings = 0;
+
+    simulate = sim;
+    buildlist_valid = false;
+
+    // TODO remove build_id from DataAcc
+    // DataAcc is now a global object and can't have shared Variables
+    build_id = 0;
 }
 
 
@@ -32,13 +39,19 @@ int Race::advanceOneTimeStep(){
 
     // stop simulating it if takes more than 1000 seconds
     // see restrictions in 'project_part2.pdf'
-    if(currentTime > 1000){
+    // don't stop when optimizing!
+    if(currentTime > 1000 && simulate){
         invalidateJSON();
         outputJSON();
         return 0;
     }
-    // TODO: restriction from pdf: there can be at most 2 vespine buildings per base!
+    // restriction from pdf: there can be at most 2 vespine buildings per base!
     // Does per base mean "per base building" or max 2 in one simulation?
+    if(vespene_buildings > 2){
+        invalidateJSON();
+        outputJSON();
+        return 0;
+    }
 
 
     // Do all neccessary actions (see header file)
@@ -83,12 +96,17 @@ void Race::distributeWorkers(){
 }
 
 void Race::invalidateJSON(){
+    buildlist_valid = true;
+    if(!simulate)
+        return;
     // in the init element valid is stored in minerals
     // because minerals is unused
     json[0].minerals = 0;
 }
 
 void Race::addEvent(std::string type, std::string name, std::string i1, std::string i2, int id){
+    if(!simulate)
+        return;
     // check for multiple build finish events from the same producer
     // TODO not tested yet -> not needed in Protoss
     if(type == "build-end"){
@@ -119,6 +137,8 @@ void Race::addEvent(std::string type, std::string name, std::string i1, std::str
 }
 
 void Race::addEventsToJSON(bool init){
+    if(!simulate)
+        return;
     if(events.size() == 0 && !init)
         return;
     if(init){
@@ -163,6 +183,8 @@ void Race::addEventsToJSON(bool init){
 }
 
 void Race::outputJSON(){
+    if(!simulate)
+        return;
     size_t count = 0;
     for(std::vector<JSON>::iterator it = json.begin(); it != json.end(); it++) {
         if(it->time == 0){

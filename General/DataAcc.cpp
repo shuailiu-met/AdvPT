@@ -5,7 +5,78 @@
 #include <assert.h>
 #include <type_traits>
 #include <algorithm>
+#include <cstdlib>
 
+void DataAcc::recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep){
+    // if dependency exists - return
+    if(std::count(bo->begin(), bo->end(), dep))
+        return;
+
+    // we always satisfy the main building dependency
+    if(dep == "Hatchery" || dep == "Nexus" || dep == "CommandCenter")
+        return;
+
+    // add all dependencies for current dep first
+    std::vector<std::string> deps = this->getAttributeVector(dep, dependencies);
+    for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
+        this->recursiveDependencyHelper(bo, *it);
+    }
+
+    // add the given dependency
+    bo->push_back(dep);
+}
+
+std::vector<std::string> DataAcc::getRandomBuildorder(std::string race, std::string target, int count){
+    std::vector<std::string> bo;
+
+    // add the neccessary dependencies for our target + target itself
+    this->recursiveDependencyHelper(&bo, target);
+
+    // for quick array access, hardcode the race indices
+    // NEEDS TO BE CHANGED IF CSV FILE CHANGES!!!
+    // indices: 0-36 = zerg, 37-74 terran, 75-107 protoss
+    int off = 0, size = 0;
+    if(!race.compare("Zerg")){
+        off = 0;
+        size = 37;
+    }else if(!race.compare("Terr")){
+        off = 37;
+        size = 38;
+    }else if(!race.compare("Prot")){
+        off = 75;
+        size = 33;
+    }else{
+        assert(false);
+    }
+
+    // add the given amount of Units
+    uint32_t to_add = count - bo.size();
+    for(uint32_t i = 0; i < to_add; i ++){
+        bool added = false;
+        while(!added){
+            // get the random unit
+            std::string unit = ids[rand() % size + off];
+            // check if needed dependencies exists
+            std::vector<std::string> deps = this->getAttributeVector(unit, dependencies);
+            for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
+                // TODO ist it better to add the dependencies for this unit
+                // or to generate another random unit?
+                // If not fount generate another random Unit
+                if(!std::count(bo.begin(), bo.end(), *it))
+                    continue;
+            }
+
+            bo.push_back(unit);
+            added = true;
+        }
+    }
+
+    // TODO list should be valid based on dependencies
+    // but there is still no guarantee that we can build the list
+    // because of vespene (none or more than 2 buildings) or timeout
+
+    return bo;
+}
 
 int DataAcc::parseCsvLine(std::string line, bool initLine){
     std::string id;

@@ -34,6 +34,8 @@ int main(int argc, char* argv[]){
     // get racename
     string race_name(argv[1]);
 
+    DataAcc data("res/unit_db.csv", "res/parameters.csv");
+
     Race *simRace = nullptr;
     // get the given race
     if(!race_name.compare("terran")){
@@ -41,7 +43,7 @@ int main(int argc, char* argv[]){
     }else if(!race_name.compare("zerg")){
         cout << "Use a Zerg object!" << "\n";
     }else if(!race_name.compare("protoss")){
-        simRace = new Protoss(buildorder);
+        simRace = new Protoss(&data, buildorder);
         //Protoss prot(buildorder);
         //int ret;
         //while((ret = prot.advanceOneTimeStep()));

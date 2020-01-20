@@ -33,6 +33,11 @@ private:
 
     // incrementing unit id
     int cur_unit_id;
+
+    // helper function for getRandomBuildorder
+    // recursively adds all dependencies for the given unit
+    void recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep);
+
 public:
 
     // enum for easy access to attributes
@@ -72,6 +77,9 @@ public:
     int getParameter(std::string setting, bool fp = false);
     // returns a preinitialized Unit or Building
     Unit getUnit(std::string name);
+
+    // retrieve a random buildorder with the given size for a race
+    std::vector<std::string> getRandomBuildorder(std::string race, std::string target, int count = 10);
 
     // some testing stuff
     std::vector<std::string> getIdVector() const {return {ids.begin(), ids.end()};}

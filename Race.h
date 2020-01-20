@@ -49,6 +49,14 @@ protected:
     // remember the current simulation time
     size_t currentTime;
 
+    // will this object simulate or optimize
+    // -> no JSON output for optimization
+    bool simulate;
+    bool buildlist_valid;
+
+    // current build id
+    uint32_t build_id;
+
     // resources the race currently has
     int workers;
     int minerals;
@@ -91,7 +99,7 @@ protected:
 public:
     // standard constructor
     // gets a vector of buildings to be build in that order
-    Race();
+    Race(DataAcc *dat, bool sim = true);
     ~Race(){}
 
     // is called from the simulation to advance on time step
@@ -105,6 +113,11 @@ public:
     // RETURNS: 1 if process not finished
     //          0 if build process finished
     int advanceOneTimeStep();
+
+    // get the current simulation time
+    int getSimulationTime(){return currentTime;}
+    // check if the buildlist is valid
+    bool buildlistValid(){return buildlist_valid;}
 
 };
 
