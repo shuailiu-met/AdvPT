@@ -37,6 +37,7 @@ private:
     // helper function for getRandomBuildorder
     // recursively adds all dependencies for the given unit
     void recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep);
+    void recursiveProducerHelper(std::vector<std::string> *bo, std::string prod);
 
     int special_id;
 public:

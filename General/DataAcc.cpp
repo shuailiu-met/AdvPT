@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <cstdlib>
-
+//producer also need this
 void DataAcc::recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep){
     // if dependency exists - return
     if(std::count(bo->begin(), bo->end(), dep))
@@ -26,11 +26,38 @@ void DataAcc::recursiveDependencyHelper(std::vector<std::string> *bo, std::strin
     bo->push_back(dep);
 }
 
+//TODO:only add one here
+void DataAcc::recursiveProducerHelper(std::vector<std::string> *bo, std::string prod){
+    // if producer exists - return
+    if(std::count(bo->begin(), bo->end(), prod))
+    return;
+
+    // we always satisfy the main building product
+    if(prod == "Hatchery" || prod == "Nexus" || prod == "CommandCenter")
+        return;
+
+    // add all producer for current producer first
+    std::vector<std::string> producers = this->getAttributeVector(prod, producer);
+    // here we only use the first of producers, since our goal is to be fast, so basic producer is considered
+    std::vector<std::string>::iterator firstprod = producers.begin();
+    if(*firstprod == "Larva")
+    {
+        return;
+    }
+
+    this->recursiveProducerHelper(bo, *firstprod);
+    // add the given producer
+    bo->push_back(prod);
+
+}
+
 std::vector<std::string> DataAcc::getRandomBuildorder(std::string race, std::string target, int count){
     std::vector<std::string> bo;
 
     // add the neccessary dependencies for our target + target itself
     this->recursiveDependencyHelper(&bo, target);
+    //producer needed to be consider
+    this->recursiveProducerHelper(&bo,target);
 
     // for quick array access, hardcode the race indices
     // NEEDS TO BE CHANGED IF CSV FILE CHANGES!!!
