@@ -58,6 +58,71 @@ std::vector<std::string> DataAcc::getRandomBuildorder(std::string race, std::str
     this->recursiveDependencyHelper(&bo, target);
     //producer needed to be consider
     this->recursiveProducerHelper(&bo,target);
+    std::string race_now = this->getAttributeString(target,race);
+    bool vespeneexist = false;
+
+        if(race_now == "Zerg"){
+        std::string vespenebuilding = "Extractor";
+        for(std::vector<std::string>::iterator it = bo->begin();it!=bo->end();it++){
+        if(*it == vespenebuilding)
+        {
+            vespeneexist = true;
+            break;
+        }
+        }
+        }
+        else if(race_now == "Terr")
+        {
+        std::string vespenebuilding = "Refinery";
+        for(std::vector<std::string>::iterator it = bo->begin();it!=bo->end();it++){
+        if(*it == vespenebuilding)
+        {
+            vespeneexist = true;
+            break;
+        }
+        }
+
+        }
+        else if(race_now == "Prot")
+        {
+        std::string vespenebuilding = "Assimilator";
+        for(std::vector<std::string>::iterator it = bo->begin();it!=bo->end();it++){
+        if(*it == vespenebuilding)
+        {
+            vespeneexist = true;
+            break;
+        }
+        }
+        }
+        else
+        {
+            assert(false);
+        }
+
+        if(vespeneexist==false)
+        {
+        for(std::vector<std::string>::iterator it2 = bo->begin();it2!=bo->end();it2++){
+        if(this->getAttributeValue(name,vespene,true)!=0)
+        {
+            if(race_now == "Zerg")
+            {
+                std::string addvespenebuilding = "Extractor";
+                bo->push_back(addvespenebuilding);
+            }
+            else if(race_now == "Terr")
+            {
+                std::string addvespenebuilding = "Refinery";
+                bo->push_back(addvespenebuilding);
+            }
+            else if(race_now == "Prot")
+            {
+                std::string addvespenebuilding = "Assimilator";
+                bo->push_back(addvespenebuilding);
+            }
+            break;
+        }
+        }
+        }
 
     // for quick array access, hardcode the race indices
     // NEEDS TO BE CHANGED IF CSV FILE CHANGES!!!
