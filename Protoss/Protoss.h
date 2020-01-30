@@ -8,6 +8,8 @@ class Protoss: public Race{
 private:
     std::list<Unit> hasEnergy;
     std::unordered_map<std::string, int> chronoboost;
+
+    int vesp_cur_build;
 public:
     Protoss(DataAcc *dat, std::vector<std::string> buildorder, bool simulate = true);
 

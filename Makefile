@@ -1,8 +1,8 @@
 CC = g++
-FLAGS = -O3 -Wall -Werror -std=c++14 -pedantic# -march=sandybridge
+FLAGS = -O3 -Wall -Werror -std=c++14 -pedantic -fopenmp# -march=sandybridge
 
 HEADER = General/DataAcc.h General/Unit.h Protoss/Protoss.h
-RACES = Race.h Protoss/Protoss.h
+RACES = Race.h Protoss/Protoss.h #Zerg/Zerg.h
 
 .PHONY: all clean
 
@@ -11,7 +11,7 @@ all: simulate optimize
 optimize: optimize.o Race.o General/DataAcc.o Protoss/Protoss.o
 	$(CC) $(FLAGS) -o $@ $^
 
-simulate: simulate.o Race.o General/DataAcc.o Protoss/Protoss.o
+simulate: simulate.o Race.o General/DataAcc.o Protoss/Protoss.o #Zerg/Zerg.o
 	$(CC) $(FLAGS) -o $@ $^
 
 Race.o: Race.cpp General/DataAcc.h General/Unit.h

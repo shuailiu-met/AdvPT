@@ -7,66 +7,143 @@
 #include <algorithm>
 #include <cstdlib>
 
-void DataAcc::recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep){
+void DataAcc::recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep, int *cur_supply, int *vespene_buildings, std::string race, bool toplevel){
     // if dependency exists - return
     if(std::count(bo->begin(), bo->end(), dep))
         return;
 
-    // we always satisfy the main building dependency
-    if(dep == "Hatchery" || dep == "Nexus" || dep == "CommandCenter")
+    // we always satisfy the main building or worker dependency
+    if(dep == special[race][0])
+        return;
+    if(dep == special[race][1])
         return;
 
-    // add all dependencies for current dep first
-    std::vector<std::string> deps = this->getAttributeVector(dep, dependencies);
+    // add the producer for the current dep
+    std::vector<std::string> deps = this->getAttributeVector(dep, producer);
     for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
-        this->recursiveDependencyHelper(bo, *it);
+        this->recursiveDependencyHelper(bo, *it, cur_supply, vespene_buildings, race, false);
+        // TODO for now always use only the first
+        // not relevant in protoss, in other races there can be multiple producers
+        break;
+    }
+    // add all dependencies for current dep
+    deps = this->getAttributeVector(dep, dependencies);
+    for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
+        this->recursiveDependencyHelper(bo, *it, cur_supply, vespene_buildings, race, false);
     }
 
-    // add the given dependency
-    bo->push_back(dep);
+    // add the given dependency but not the unit itself
+    if(!toplevel){
+        while(*cur_supply < this->getAttributeValue(dep, supply_cost)){
+            bo->push_back(special[race][3]);
+            *cur_supply += this->getAttributeValue(special[race][3], supply_provided);
+        }
+        if(this->getAttributeValue(dep, vespene) > 0 && *vespene_buildings == 0){
+            bo->push_back(special[race][2]);
+            *vespene_buildings += 1;
+        }
+
+        *cur_supply += this->getAttributeValue(dep, supply);
+        bo->push_back(dep);
+    }
 }
 
-std::vector<std::string> DataAcc::getRandomBuildorder(std::string race, std::string target, int count){
+std::vector<std::string> DataAcc::getRandomBuildorder(std::string race, std::string target, std::string strategy, int count){
     std::vector<std::string> bo;
 
-    // add the neccessary dependencies for our target + target itself
-    this->recursiveDependencyHelper(&bo, target);
+    // add random number of vespene buildings at the beginning!
+    // mostly needed but seldom added
+    // min: 0, max: 2
+    //int vespene_buildings = rand() % 3;
+    int vespene_buildings = 0;
+    int base_buildings = 1;
+    int cur_supply = this->getAttributeValue(special[race][0], supply_provided);
 
-    // for quick array access, hardcode the race indices
-    // NEEDS TO BE CHANGED IF CSV FILE CHANGES!!!
-    // indices: 0-36 = zerg, 37-74 terran, 75-107 protoss
-    int off = 0, size = 0;
-    if(!race.compare("Zerg")){
-        off = 0;
-        size = 37;
-    }else if(!race.compare("Terr")){
-        off = 37;
-        size = 38;
-    }else if(!race.compare("Prot")){
-        off = 75;
-        size = 33;
-    }else{
-        assert(false);
+    // add start supply
+    for(int i = 0; i < this->getParameter("WORKERS_START"); i++){
+        cur_supply -= this->getAttributeValue(special[race][1], supply_cost);
     }
 
+    // add the neccessary dependencies for our target
+    this->recursiveDependencyHelper(&bo, target, (int*)&cur_supply, &vespene_buildings, race);
+
     // add the given amount of Units
-    uint32_t to_add = count - bo.size();
+    uint32_t to_add = 10000;
+    if(strategy == "rush")
+        to_add = count - bo.size();
+
+    int target_count = 0;
     for(uint32_t i = 0; i < to_add; i ++){
+        if(strategy == "push" && target_count == count){
+            break;
+        }
         bool added = false;
         while(!added){
             // get the random unit
-            std::string unit = ids[rand() % size + off];
-            // check if needed dependencies exists
-            std::vector<std::string> deps = this->getAttributeVector(unit, dependencies);
-            for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
-                // TODO ist it better to add the dependencies for this unit
-                // or to generate another random unit?
-                // If not fount generate another random Unit
-                if(!std::count(bo.begin(), bo.end(), *it))
-                    continue;
+            //std::string unit = ids[rand() % size + off];
+            // TODO does only work for protoss, other races need to be added to special!!!
+            // only add buildings that are usefull
+            // -> worker, base, vespene, supply
+            int random = rand() % 15;
+            std::string unit;
+            if(random < 4){
+                unit = special[race][random];
+            }else{
+                unit = target;
             }
 
+            // Not enough supply
+            if((cur_supply + this->getAttributeValue(unit, supply)) < 0)
+                continue;
+
+            // check if needed dependencies exists
+            std::vector<std::string> deps = this->getAttributeVector(unit, dependencies);
+            bool deps_ok = true;
+            for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
+                // If not fount generate another random Unit
+                if(!std::count(bo.begin(), bo.end(), *it)){
+                    deps_ok = false;
+                    break;
+                }
+            }
+            if(!deps_ok){
+                continue;
+            }
+
+            // check if producer exists
+            deps = this->getAttributeVector(unit, producer);
+            bool prod_ok = false;
+            for(std::vector<std::string>::iterator it = deps.begin(); it != deps.end(); it++) {
+                // If not found generate another random Unit
+                // check whether it's the main building or in the list already
+                if(*it == special[race][0] || std::count(bo.begin(), bo.end(), *it)){
+                    prod_ok = true;
+                    break;
+                }
+            }
+            if(!prod_ok){
+                continue;
+            }
+
+            if(unit == special[race][2]){
+                if(vespene_buildings == base_buildings * 2){
+                    continue;
+                }
+                vespene_buildings += 1;
+            } else if(this->getAttributeValue(unit, vespene) > 0){
+                if(vespene_buildings == 0){
+                    continue;
+                }
+            }
+
+            if(unit == special[race][0])
+                base_buildings ++;
+
+            if(unit == target)
+                target_count ++;
+
             bo.push_back(unit);
+            cur_supply += this->getAttributeValue(unit, supply);
             added = true;
         }
     }
@@ -189,6 +266,16 @@ DataAcc::DataAcc(std::string unitdb, std::string config){
         }
     }
     fs.close();
+
+    // init special unit structure
+    // add all buildings which should be considered
+    // from the random list generator
+    // index: 0: main, 1: worker, 2: vespene, 3: supply
+    special["Prot"].push_back("Nexus");
+    special["Prot"].push_back("Probe");
+    special["Prot"].push_back("Assimilator");
+    special["Prot"].push_back("Pylon");
+    // TODO if this is a good approach -> add other races
 }
 
 std::string DataAcc::getAttributeString(std::string id, int attribute){

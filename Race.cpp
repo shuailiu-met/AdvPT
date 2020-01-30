@@ -20,9 +20,10 @@ Race::Race(DataAcc *dat, bool sim){
     supply = 0;
     supply_used = 0;
     vespene_buildings = 0;
+    base_buildings = 0;
 
     simulate = sim;
-    buildlist_valid = false;
+    buildlist_valid = true;
 
     // TODO remove build_id from DataAcc
     // DataAcc is now a global object and can't have shared Variables
@@ -45,14 +46,15 @@ int Race::advanceOneTimeStep(){
         outputJSON();
         return 0;
     }
+
     // restriction from pdf: there can be at most 2 vespine buildings per base!
     // Does per base mean "per base building" or max 2 in one simulation?
-    if(vespene_buildings > 2){
+    if(base_buildings * 2 < vespene_buildings){
         invalidateJSON();
         outputJSON();
+        std::cout << "Too many vesp buildings!!! Base: " << base_buildings << " Vesp: " << vespene_buildings << "\n";
         return 0;
     }
-
 
     // Do all neccessary actions (see header file)
     updateResources();
@@ -65,16 +67,22 @@ int Race::advanceOneTimeStep(){
     if(!ret)
         ret = startBuildingProcess();
     if(ret == -2){
+        //std::cout << "building process broken!!\n";
         // building can never be build!
         invalidateJSON();
         outputJSON();
         return 0;
     }
 
-    distributeWorkers();
+    bool changed = distributeWorkers();
 
-    // add all events added at this timestep to json
-    addEventsToJSON();
+    // if only worker dist happened -> still print in JSON
+    if(changed && events.size() == 0){
+        addEventsToJSON(false, true);
+    }else{
+        // add all events added at this timestep to json
+        addEventsToJSON();
+    }
 
     if((building.size() + future.size()) == 0)
         outputJSON();
@@ -82,21 +90,27 @@ int Race::advanceOneTimeStep(){
 }
 
 // implement worker distribution strategy here
-void Race::distributeWorkers(){
+bool Race::distributeWorkers(){
+    int tmp_vesp = worker_vespene;
+
     // as much workers as possible to vespene
     worker_vespene = (workers <= vespene_buildings * 3) ? workers : vespene_buildings * 3;
     worker_minerals = workers - worker_vespene;
     // normally we need more minerals than we need vespine
     // => redistribute if we have less minerals
     // TODO play aroud with this and see which distribution has good results
-    /*if(minerals < 2*vespene){
+    if(minerals < 2*vespene){
         worker_minerals += worker_vespene;
         worker_vespene = 0;
-    }*/
+    }
+
+    if(tmp_vesp != worker_vespene)
+        return true;
+    return false;
 }
 
 void Race::invalidateJSON(){
-    buildlist_valid = true;
+    buildlist_valid = false;
     if(!simulate)
         return;
     // in the init element valid is stored in minerals
@@ -136,10 +150,10 @@ void Race::addEvent(std::string type, std::string name, std::string i1, std::str
     events.push_back(ev);
 }
 
-void Race::addEventsToJSON(bool init){
+void Race::addEventsToJSON(bool init, bool dist_only){
     if(!simulate)
         return;
-    if(events.size() == 0 && !init)
+    if(events.size() == 0 && !init && !dist_only)
         return;
     if(init){
         JSON js;

@@ -11,6 +11,7 @@ Protoss::Protoss(DataAcc *dat, std::vector<std::string> buildorder, bool sim) : 
         Unit u = data->getUnit("Nexus");
         finished.push_back(u);
         hasEnergy.push_back(u);
+        base_buildings += 1;
     }
     for(int i = 0; i < data->getParameter("WORKERS_START"); i++){
         finished.push_back(data->getUnit("Probe"));
@@ -24,6 +25,7 @@ Protoss::Protoss(DataAcc *dat, std::vector<std::string> buildorder, bool sim) : 
     }
 
     worker_minerals = workers;
+    vesp_cur_build = 0;
 }
 
 void Protoss::updateResources(){
@@ -69,12 +71,15 @@ void Protoss::advanceBuildingProcess(){
         building.remove(*it);
         finished.push_back(*it);
 
-        if(it->getName() == "Probe")
+        if(it->getName() == "Probe"){
             workers++;
-        if(it->getName() == "Assimilator")
+        }else if(it->getName() == "Assimilator"){
+            vesp_cur_build -= 1;
             vespene_buildings += 1;
-        if(it->getName() == "Nexus")
+        }else if(it->getName() == "Nexus"){
+            base_buildings += 1;
             hasEnergy.push_back(*it);
+        }
         addEvent("build-end", it->getName(), it->getBuildBy(), "", it->getId());
     }
 }
@@ -114,6 +119,20 @@ int Protoss::startBuildingProcess(){
 
     // check if Unit is from the correct race
     if(data->getAttributeString(newUnit.getName(), DataAcc::race) != "Prot"){
+        //std::cout << "Wrong Race!!!\n";
+        return -2;
+    }
+
+    // no more than 2 vespene buildings per base
+    if(newUnit.getName() == "Assimilator" && ((vespene_buildings + vesp_cur_build) >= 2 * base_buildings)){
+        // check if base is currentliy building
+        for(std::list<Unit>::iterator it = building.begin(); it != building.end(); it++) {
+            // found -> wait for buildingd to be finished
+            if("Nexus" == it->getName()){
+                return 0;
+            }
+        }
+        // else -> stop simulation
         return -2;
     }
 
@@ -124,11 +143,15 @@ int Protoss::startBuildingProcess(){
     // we don't meet the requirements
     if(needMin > minerals || needVesp > vespene || needSupply > (supply - supply_used)){
         // if no vespene buildings, return -2
-        if(needVesp > vespene && building.size() == 0 && vespene_buildings == 0)
+        if(needVesp > vespene && building.size() == 0 && vespene_buildings == 0){
+            std::cout << "No vespene!!!\n";
             return -2;
+        }
         // if we don't have enough supply and no buildings are build -> cancel
-        if(needSupply > (supply - supply_used) && building.size() == 0)
+        if(needSupply > (supply - supply_used) && building.size() == 0){
+            std::cout << "Supply " << supply << " Used " << supply_used << "\n";
             return -2;
+        }
         return 0;
     }
 
@@ -152,6 +175,7 @@ int Protoss::startBuildingProcess(){
                     return 0;
             }
             // return a value which tells us to stop simulation
+            std::cout << "Dependency not met!!! \"" << *it <<"\" for \"" << newUnit.getName() << "\" needed!!\n";
             return -2;
         }else{
             break;
@@ -199,11 +223,15 @@ int Protoss::startBuildingProcess(){
             }
         }
         // return value to indicate stopping of simulation
-        if(!prodExists)
+        if(!prodExists){
+            std::cout << "Producer doesn't exist!!!\n";
             return -2;
+        }
     }
 
     if(prodOK){
+        if(newUnit.getName() == "Assimilator")
+            vesp_cur_build += 1;
         // add event for JSON
         addEvent("build-start", newUnit.getName(), prodName);
 

@@ -59,7 +59,7 @@ int main(){
     cout << "Max larva per building: " << val << endl;
 
     for(int a = 0; a < 20; a++){
-        vector<string> test = data.getRandomBuildorder("protoss", "Disruptor");
+        vector<string> test = data.getRandomBuildorder("Prot", "Phoenix", "push", 2);
 
         for(vector<string>::iterator it = test.begin(); it != test.end(); ++it) {
             cout<<*it<<" ";

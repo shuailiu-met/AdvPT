@@ -26,6 +26,8 @@ private:
     std::vector<std::string> indices;
     // stores the names of the units and buildings
     std::vector<std::string> ids;
+    // stores special units used for random buildlist generation
+    std::unordered_map<std::string, std::vector<std::string>> special;
     // parses the csv lines and fills the data structures above
     int parseCsvLine(std::string, bool);
     // parses the config file lines and fills the data structures above
@@ -36,7 +38,8 @@ private:
 
     // helper function for getRandomBuildorder
     // recursively adds all dependencies for the given unit
-    void recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep);
+    void recursiveDependencyHelper(std::vector<std::string> *bo, std::string dep,
+        int *supply, int *vespene_buildings, std::string race, bool toplevel = true);
 
     int special_id;
 public:
@@ -80,7 +83,8 @@ public:
     Unit getUnit(std::string name);
 
     // retrieve a random buildorder with the given size for a race
-    std::vector<std::string> getRandomBuildorder(std::string race, std::string target, int count = 10);
+    std::vector<std::string> getRandomBuildorder(std::string race, std::string target,
+        std::string strategy, int count = 10);
 
     // some testing stuff
     std::vector<std::string> getIdVector() const {return {ids.begin(), ids.end()};}

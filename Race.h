@@ -64,6 +64,7 @@ protected:
     int supply;
     int supply_used;
     int vespene_buildings;
+    int base_buildings;
 
     // worker distribution
     int worker_minerals;
@@ -81,7 +82,7 @@ protected:
     //   returns -2 if the simulation process failed
     virtual int startBuildingProcess() = 0;
     // - distribute workers depending on the strategy
-    void distributeWorkers();
+    bool distributeWorkers();
     // - output current JSON
     void outputJSON();
 
@@ -93,7 +94,7 @@ protected:
     // for parameter see examples on https://www10.cs.fau.de/advptSC2/
     void addEvent(std::string type, std::string name, std::string i1, std::string i2 = "", int id = -1);
 
-    void addEventsToJSON(bool init = false);
+    void addEventsToJSON(bool init = false, bool dist_only = false);
     void invalidateJSON();
 
 public:

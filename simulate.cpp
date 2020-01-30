@@ -1,7 +1,7 @@
 #include "Race.h"
 #include "Protoss/Protoss.h"
 #include "General/DataAcc.h"
-#include "Zerg/Zerg.h"
+//#include "Zerg/Zerg.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
         cout << "Use a Terran object!" << "\n";
     }else if(!race_name.compare("zerg")){
         //cout << "Use a Zerg object!" << "\n";
-        simRace = new Zerg(buildorder);
+        //simRace = new Zerg(buildorder);
     }else if(!race_name.compare("protoss")){
         simRace = new Protoss(&data, buildorder);
         //Protoss prot(buildorder);
